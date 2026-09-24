@@ -18,7 +18,8 @@ const CHAPTERS = [
   { slug: "04-memory",        num: "04", title: "Robot memory",            sub: "Threads, tokens, summaries",       builds: "R-80 remembers across turns", time: "25 min" },
   { slug: "05-multi-agent",   num: "05", title: "The robot squad",         sub: "Multi-agent graphs",               builds: "SCOUT + GRIP coordinated by a supervisor", time: "45 min" },
   { slug: "06-robot-control", num: "06", title: "Mission control",         sub: "Natural language → robot actions", builds: "natural-language missions, end to end", time: "40 min" },
-  { slug: "07-discussion",    num: "07", title: "Debrief",                 sub: "Open questions",                   builds: "where this fits in your own robots", time: "30 min" },
+  { slug: "07-ros2-field",    num: "07", title: "ROS 2 × LangChain",       sub: "★ Field-tested in our lab",        builds: "the agent as high-level controller of real robots", time: "15 min", gold: true },
+  { slug: "08-discussion",    num: "08", title: "Debrief",                 sub: "Open questions",                   builds: "where this fits in your own robots", time: "30 min" },
 ];
 
 const GROUP = {
@@ -128,7 +129,7 @@ function buildSidebar(current) {
     <div class="side-title">// COURSE MAP</div>
     <ol>${CHAPTERS.map((c) => `
       <li>
-        <a href="${url("chapters/" + c.slug + ".html")}" class="${c.slug === current ? "active" : ""}">
+        <a href="${url("chapters/" + c.slug + ".html")}" class="${c.slug === current ? "active" : ""} ${c.gold ? "gold-link" : ""}">
           <span class="num">${c.num}</span><span>${c.title}<small>${c.sub}</small></span>
         </a>
         ${c.slug === current && toc ? `<ol class="toc">${toc}</ol>` : ""}

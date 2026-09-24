@@ -277,7 +277,153 @@
     }
   }
 
+
+  /* ============================ SAFETY GATE (ROS 2) ============================
+     Mirrors code/data/capabilities.yaml + SafetyGate in code/ch7_ros2_bridge.py */
+  const CAPS = {
+    set_speed: { type: "number", min: 0, max: 0.8, max_delta: 0.3, units: "m/s", topic: "/r80/cmd/speed", initial: 0 },
+    set_gripper_force: { type: "number", min: 0, max: 100, max_delta: 40, units: "%", topic: "/r80/cmd/gripper_force", initial: 50 },
+    set_mode: { type: "string", enum: ["slow", "normal"], topic: "/r80/cmd/mode", initial: "normal" },
+  };
+  const round = (x) => Math.round(x * 100) / 100;
+  const REQUESTS = [
+    { label: "Speed up a little", plan: (s) => ({ status: "EXECUTE", say: "Increasing speed gently.",
+        steps: [{ cap: "set_speed", value: round(Math.min(s.set_speed + 0.2, 0.8)), why: "Small increase requested." }] }) },
+    { label: "Full speed ahead, now!", plan: () => ({ status: "EXECUTE", say: "Going to top speed.",
+        steps: [{ cap: "set_speed", value: 0.8, why: "Operator asked for full speed." }],
+        retry: (s) => ({ cap: "set_speed", value: round(Math.min(s.set_speed + 0.3, 0.8)), why: "Gate said: change gradually. Stepping up instead." }) }) },
+    { label: "Grab the sensor kit gently", plan: (s) => ({ status: "EXECUTE", say: "Slow mode and low grip force for a fragile item.",
+        steps: [{ cap: "set_mode", value: "slow", why: "Sensor kit lives in zone B." },
+                { cap: "set_gripper_force", value: Math.max(s.set_gripper_force - 30, 20), why: "Fragile item: lower the force." }] }) },
+    { label: "Disable the speed limits", plan: () => ({ status: "REFUSE", say: "I can't bypass safety limits. They're enforced outside me anyway.", steps: [] }) },
+    { label: "Adjust the thing", plan: () => ({ status: "NEED_MORE_INFO", say: "Which one: speed, gripper force or driving mode?", steps: [] }) },
+  ];
+
+  class SafetyGateWidget {
+    constructor(root) {
+      this.root = root;
+      root.innerHTML = `
+        <div class="widget-bar"><span class="title">SAFETY GATE · LLM → ROS 2</span><button class="btn reset">↺ Reset robot</button></div>
+        <div class="sim-prompts"><span class="label">OPERATOR REQUEST</span>
+          ${REQUESTS.map((r, i) => `<button class="prompt-chip" data-i="${i}">${r.label}</button>`).join("")}</div>
+        <div class="sg-body">
+          <div class="sg-col"><h5>1 · LLM PLAN (JSON)</h5><div class="sg-plan"><span class="sg-dim">Waiting for a request…</span></div></div>
+          <div class="sg-col"><h5>2 · SAFETY GATE</h5>
+            <div class="sg-checks">
+              <div class="sg-check" data-c="manifest"><i></i>Declared in the manifest</div>
+              <div class="sg-check" data-c="range"><i></i>Within min/max</div>
+              <div class="sg-check" data-c="delta"><i></i>Change ≤ max step</div>
+            </div>
+            <div class="sg-verdict"></div></div>
+          <div class="sg-col"><h5>3 · ROS 2 TOPICS</h5><div class="sg-gauges"></div><div class="sg-log"></div></div>
+        </div>
+        <div class="caption">The LLM proposes, the gate decides. Pick a request.</div>`;
+      root.querySelector(".reset").addEventListener("click", () => this.reset());
+      root.querySelectorAll(".prompt-chip").forEach((b) => b.addEventListener("click", () => this.run(Number(b.dataset.i))));
+      this.reset();
+    }
+
+    reset() {
+      this.token = (this.token || 0) + 1;
+      this.state = Object.fromEntries(Object.entries(CAPS).map(([k, c]) => [k, c.initial]));
+      this.root.querySelector(".sg-log").innerHTML = "";
+      this.root.querySelector(".sg-plan").innerHTML = `<span class="sg-dim">Waiting for a request…</span>`;
+      this.checks();
+      this.gauges();
+      this.caption("The LLM proposes, the gate decides. Pick a request.");
+    }
+    caption(h) { this.root.querySelector(".caption").innerHTML = h; }
+
+    gauges() {
+      const s = this.state;
+      const bar = (k) => { const c = CAPS[k]; return `<div class="sg-gauge"><span>${k.replace("set_", "")}</span><b>${s[k]} ${c.units}</b>
+        <div class="hud-bar"><i style="width:${(s[k] - c.min) / (c.max - c.min) * 100}%"></i></div></div>`; };
+      this.root.querySelector(".sg-gauges").innerHTML = bar("set_speed") + bar("set_gripper_force") +
+        `<div class="sg-gauge"><span>mode</span><b>${s.set_mode}</b></div>`;
+    }
+
+    checks(res = {}) {
+      this.root.querySelectorAll(".sg-check").forEach((c) => { c.className = `sg-check ${res[c.dataset.c] || ""}`; });
+      if (!Object.keys(res).length) this.root.querySelector(".sg-verdict").innerHTML = "";
+    }
+
+    evaluate(step) {
+      const c = CAPS[step.cap], prev = this.state[step.cap];
+      const r = { manifest: c ? "ok" : "fail" };
+      if (!c) return [r, `'${step.cap}' is not in the capability manifest.`];
+      if (c.type === "number") {
+        r.range = step.value >= c.min && step.value <= c.max ? "ok" : "fail";
+        if (r.range === "fail") return [r, `${step.value} is outside [${c.min}, ${c.max}] ${c.units}.`];
+        r.delta = Math.abs(step.value - prev) <= c.max_delta + 1e-9 ? "ok" : "fail";
+        if (r.delta === "fail") return [r, `${prev} → ${step.value} is a jump bigger than ${c.max_delta} ${c.units}. Change it gradually.`];
+      } else {
+        r.range = c.enum.includes(step.value) ? "ok" : "fail";
+        r.delta = "skip";
+        if (r.range === "fail") return [r, `'${step.value}' is not one of ${c.enum.join(", ")}.`];
+      }
+      return [r, null];
+    }
+
+    async gateStep(step, tk) {
+      const plan = this.root.querySelector(".sg-plan");
+      plan.insertAdjacentHTML("beforeend", `<div class="sg-step"><code>${step.cap}(${JSON.stringify(step.value)})</code><small>${step.why}</small></div>`);
+      const card = plan.lastElementChild;
+      this.checks();
+      this.caption(`Checking <b>${step.cap}(${JSON.stringify(step.value)})</b> against the manifest…`);
+      const [res, reason] = this.evaluate(step);
+      for (const k of ["manifest", "range", "delta"]) {
+        await wait(420); if (tk !== this.token) return false;
+        const partial = {};
+        for (const kk of ["manifest", "range", "delta"]) { partial[kk] = res[kk] || ""; if (kk === k) break; }
+        this.checks(partial);
+        if (res[k] === "fail") break;
+      }
+      const verdict = this.root.querySelector(".sg-verdict");
+      if (reason) {
+        card.classList.add("rejected");
+        verdict.innerHTML = `<span class="sg-bad">✗ REJECTED</span> ${reason}`;
+        this.caption(`Not published. The rejection goes back to the LLM as the tool result, so it can adapt.`);
+        return false;
+      }
+      card.classList.add("accepted");
+      verdict.innerHTML = `<span class="sg-ok">✓ PASSED</span> publishing to ROS 2`;
+      await wait(350); if (tk !== this.token) return false;
+      this.state[step.cap] = step.value;
+      this.root.querySelector(".sg-log").insertAdjacentHTML("afterbegin", `<div><b>${CAPS[step.cap].topic}</b> ← ${JSON.stringify(step.value)}</div>`);
+      this.gauges();
+      return true;
+    }
+
+    async run(i) {
+      this.token++;
+      const tk = this.token, req = REQUESTS[i];
+      this.root.querySelectorAll(".prompt-chip").forEach((b) => b.classList.toggle("active", Number(b.dataset.i) === i));
+      const plan = req.plan(this.state);
+      const box = this.root.querySelector(".sg-plan");
+      box.innerHTML = `<div class="sg-status ${plan.status.toLowerCase()}">status: ${plan.status}</div><div class="sg-say">“${plan.say}”</div>`;
+      this.checks();
+      if (!plan.steps.length) {
+        this.caption(plan.status === "REFUSE"
+          ? "The LLM refused, so no command was sent. Even if it hadn't, the gate would still block anything outside the manifest."
+          : "The LLM asked for clarification instead of guessing. Nothing reaches the robot.");
+        return;
+      }
+      for (const step of plan.steps) {
+        const ok = await this.gateStep(step, tk);
+        if (tk !== this.token) return;
+        if (!ok && plan.retry) {
+          await wait(1300); if (tk !== this.token) return;
+          box.insertAdjacentHTML("beforeend", `<div class="sg-say">↻ LLM reads the rejection and retries</div>`);
+          await this.gateStep(plan.retry(this.state), tk);
+        }
+        await wait(500);
+      }
+      if (tk === this.token) this.caption("Done. Only validated values reached the robot's topics.");
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".safety-gate").forEach((e) => new SafetyGateWidget(e));
     document.querySelectorAll(".tool-wire").forEach((e) => new ToolWire(e));
     document.querySelectorAll(".rag-explorer").forEach((e) => new RagExplorer(e));
   });

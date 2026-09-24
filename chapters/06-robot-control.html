@@ -51,8 +51,9 @@
 <p>Swap <code>WORLD.move_to()</code> for a ROS 2 action, an HTTP call to your robot's API or a serial command. The agent doesn't care: it only sees the tool's name, docstring and result string.</p>
 <div class="callout warn"><p><strong>Keep the LLM out of the fast loop.</strong> Let it plan and orchestrate (seconds). Keep low-level control, like motor loops and obstacle avoidance, in classic real-time code (milliseconds).</p></div>
 
-<h2 id="d2w">Real case: D2W</h2>
-<div class="todo">How D2W uses LangGraph as the orchestration layer for complex, recurring communications. Diagram + lessons learned.</div>
+<div class="gold-frame"><span class="gold-badge">★ NEXT: FIELD-TESTED</span>
+<p style="margin:14px 0 0">Want to see this on a <strong>real</strong> robot? The next chapter shows how we use this pattern with ROS 2 on real robots in our lab.</p>
+<p style="margin:12px 0 0"><a class="btn" href="07-ros2-field.html" style="border-color:var(--gold);color:var(--gold)">ROS 2 × LangChain ▶</a></p></div>
 
 <div class="prompt-box">
   <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>

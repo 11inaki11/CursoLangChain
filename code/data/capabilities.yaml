@@ -1,0 +1,30 @@
+# Capability manifest: the ONLY actions the LLM may take, and their limits.
+# Tools AND the safety gate are generated from this one file, the same pattern
+# we use to put LLM agents on real robots.
+capabilities:
+  - id: set_speed
+    description: Set R-80's forward speed.
+    type: number
+    min: 0.0
+    max: 0.8
+    max_delta: 0.3        # biggest change allowed in a single command
+    units: m/s
+    initial: 0.0
+    topic: /r80/cmd/speed
+
+  - id: set_gripper_force
+    description: Set the gripper closing force. Fragile items need a low force.
+    type: number
+    min: 0
+    max: 100
+    max_delta: 40
+    units: "%"
+    initial: 50
+    topic: /r80/cmd/gripper_force
+
+  - id: set_mode
+    description: Set the driving mode. Use slow inside zone B.
+    type: string
+    enum: [slow, normal]
+    initial: normal
+    topic: /r80/cmd/mode

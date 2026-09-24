@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ROS 2 × LangChain · Robot Agents</title>
+  <meta name="description" content="How the BioRobotics Group (CAR, CSIC-UPM) uses LangChain agents with ROS 2 as high-level controllers of real robots: capability manifests, safety gates and closed loops.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="07-ros2-field">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <span class="gold-badge">★ FIELD-TESTED · HOW WE BUILD IT</span>
+  <h1 style="margin-top:16px"><span class="gold-text">ROS 2 × LangChain</span><br>the agent as a high-level controller</h1>
+  <p class="lead">Everything so far was the textbook. This chapter shows how we actually put LLM agents on real robots at the <a href="https://biorobotics.car.upm-csic.es/" target="_blank" rel="noopener">BioRobotics Group</a> (CAR, CSIC-UPM).</p>
+  <div class="meta"><span class="chip yellow">ROS 2 Jazzy</span><span class="chip yellow">LangChain + LangGraph</span><span class="chip yellow">Safety gate</span><span class="chip yellow">Closed loop</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>The LLM never drives the motors. It acts as a <strong>high-level controller</strong>: it turns human intent into a few <strong>bounded commands</strong>, a deterministic <strong>safety gate</strong> validates them, and ROS 2 delivers them to a robot whose real-time control stays classic.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>Natural-language control of real hardware</li><li>Hard safety limits the LLM cannot break</li><li>A slow reasoning loop on top of fast classic control</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>Capability manifest</strong>: YAML listing every allowed action + limits</li><li><strong>Safety gate</strong>: code that validates each command</li><li><strong>High-level controller</strong>: decides <em>what</em>, never <em>how</em> at 100 Hz</li></ul></div>
+</div>
+
+<h2 id="ros-meets-agents">ROS 2 meets LangChain</h2>
+<p>If you know ROS 2, you already know half of this. Most agent concepts map directly onto ROS 2 concepts:</p>
+<div class="table-wrap"><table class="map-table">
+  <tr><th>ROS 2</th><th>Agent world</th><th>How we connect them</th></tr>
+  <tr><td>service / action</td><td>tool</td><td>Each allowed robot command becomes one LangChain tool</td></tr>
+  <tr><td>topic subscription</td><td>observation</td><td>Sensor data summarized into the agent's context</td></tr>
+  <tr><td>parameter limits</td><td>tool schema</td><td>Ranges and max steps written in a manifest, enforced by the gate</td></tr>
+  <tr><td>node</td><td>agent / graph node</td><td>Each agent runs in (or next to) its own ROS 2 node</td></tr>
+  <tr><td>launch file</td><td>graph composition</td><td>Controller, observer and planner started together, but independent</td></tr>
+  <tr><td>rosbag</td><td>trace</td><td>Every prompt, tool call, token count and latency logged for analysis</td></tr>
+</table></div>
+
+<h2 id="architecture">The architecture</h2>
+<p>Step through the layers, then press <strong>Trace a run</strong> to follow one decision around the loop.</p>
+<div class="diagram" data-diagram="ros2-arch"></div>
+
+<h2 id="safety-gate">Pattern 1 · The safety gate</h2>
+<p>The most important idea in this chapter: <strong>the LLM proposes, the gate decides</strong>. Every action the robot can take is declared once in a <em>capability manifest</em> with its range, its maximum change per command and the ROS 2 topic or service it maps to. The same file generates the LLM's tools <em>and</em> the validation code, so they can never drift apart.</p>
+<p>Try to make R-80 misbehave:</p>
+<div class="wide"><div class="widget safety-gate"></div></div>
+<div class="callout warn"><p><strong>Rejections are information.</strong> A rejected command is returned to the LLM as the tool result ("jump bigger than 0.3 m/s, change it gradually"), so the agent adapts instead of crashing. And the emergency stop never goes through the LLM: it lives in hardware and classic code.</p></div>
+<div class="wide side-by-side">
+  <div class="code" data-file="data/capabilities.yaml" data-download="code/data/capabilities.yaml"><pre><code class="lang-bash"># Capability manifest: the ONLY actions the LLM may take, and their limits.
+# Tools AND the safety gate are generated from this one file, the same pattern
+# we use to put LLM agents on real robots.
+capabilities:
+  - id: set_speed
+    description: Set R-80's forward speed.
+    type: number
+    min: 0.0
+    max: 0.8
+    max_delta: 0.3        # biggest change allowed in a single command
+    units: m/s
+    initial: 0.0
+    topic: /r80/cmd/speed
+
+  - id: set_gripper_force
+    description: Set the gripper closing force. Fragile items need a low force.
+    type: number
+    min: 0
+    max: 100
+    max_delta: 40
+    units: "%"
+    initial: 50
+    topic: /r80/cmd/gripper_force
+
+  - id: set_mode
+    description: Set the driving mode. Use slow inside zone B.
+    type: string
+    enum: [slow, normal]
+    initial: normal
+    topic: /r80/cmd/mode</code></pre></div>
+  <div class="code" data-file="ch7_ros2_bridge.py" data-download="code/ch7_ros2_bridge.py"><pre><code class="lang-python">class SafetyGate:
+    def __init__(self, manifest: dict) -&gt; None:
+        self.caps = {c["id"]: c for c in manifest["capabilities"]}
+        self.state = {c["id"]: c["initial"] for c in manifest["capabilities"]}
+
+    def check(self, cap_id: str, value) -&gt; str | None:
+        """Return None if the command is safe, or the reason it was rejected."""
+        cap = self.caps.get(cap_id)
+        if cap is None:
+            return f"REJECTED: '{cap_id}' is not in the capability manifest."
+        if cap["type"] == "number":
+            if not cap["min"] &lt;= value &lt;= cap["max"]:
+                return f"REJECTED: {value} is outside [{cap['min']}, {cap['max']}] {cap['units']}."
+            if abs(value - self.state[cap_id]) &gt; cap["max_delta"]:
+                return (f"REJECTED: {self.state[cap_id]} -&gt; {value} is a jump bigger than "
+                        f"{cap['max_delta']} {cap['units']}. Change it gradually.")
+        elif value not in cap["enum"]:
+            return f"REJECTED: '{value}' is not one of {cap['enum']}."
+        return None</code></pre></div>
+</div>
+<div class="code" data-file="ch7_ros2_bridge.py · tools from the manifest" data-download="code/ch7_ros2_bridge.py"><pre><code class="lang-python">def build_tools(gate: SafetyGate, bridge: RosBridge) -&gt; list:
+    tools = []
+    for cap in MANIFEST["capabilities"]:
+        if cap["type"] == "number":
+            hint = f"{cap['min']}..{cap['max']} {cap['units']}, change at most {cap['max_delta']} per call"
+            field = (float, Field(description=hint))
+        else:
+            field = (str, Field(description=f"one of {cap['enum']}"))
+        Args = create_model(f"{cap['id']}_args", value=field)
+
+        def run(value, _cap=cap) -&gt; str:
+            if reason := gate.check(_cap["id"], value):
+                return reason                      # the LLM reads this and can adapt
+            bridge.publish(_cap, value)
+            gate.state[_cap["id"]] = value
+            return f"OK: {_cap['id']} = {value} {_cap.get('units', '')}".strip()
+
+        tools.append(StructuredTool.from_function(
+            func=run, name=cap["id"], description=cap["description"], args_schema=Args))
+
+    @tool
+    def get_robot_state() -&gt; str:
+        """Current commanded values of every capability (closed-loop context)."""
+        return str(gate.state)
+
+    return tools + [get_robot_state]</code></pre></div>
+
+<h2 id="loops">Pattern 2 · Slow loop over fast loop</h2>
+<div class="grid-2">
+  <div class="card gold"><h4>Slow loop · LLM</h4><p>Seconds to minutes. Reads windows of metrics, reasons about goals, decides <em>which</em> setting to change. Tolerates latency, benefits from context.</p></div>
+  <div class="card"><h4>Fast loop · classic control</h4><p>Milliseconds (100 Hz and up). Motor controllers, impedance, balance. Deterministic, certifiable, never waits for a token.</p></div>
+</div>
+<p>We also split the reasoning in two: an <strong>observer agent</strong> that is <em>advisory only</em> (it reads metrics and writes structured observations, but cannot command the robot), and a <strong>controller agent</strong> that is the only one allowed to call robot tools. Fewer agents with hands means a smaller surface for mistakes.</p>
+
+<h2 id="contract">Pattern 3 · A strict output contract</h2>
+<p>A robot can't act on "Sure! I think maybe we could…". The controller must answer with structured output. Our pattern: a status, a bounded plan, and a short justification per step so every decision can be audited later.</p>
+<div class="code" data-file="controller output"><pre><code class="lang-bash">{
+  "status": "EXECUTE",            // or "NEED_MORE_INFO" | "REFUSE"
+  "plan": [
+    {"primitive": "set_speed", "parameters": {"value": 0.4},
+     "justification": "Operator reports a wet floor; reduce speed within the allowed step."}
+  ],
+  "spoken_response": "Slowing down a little."
+}</code></pre></div>
+
+<h2 id="where-it-fits">Swap the manifest, keep the architecture</h2>
+<p>Nothing in this stack is specific to one robot. The agent, the gate, the bridge and the loops stay the same. What changes is the <strong>capability manifest</strong>: which commands exist, their limits, and which ROS 2 interface each one maps to.</p>
+<div class="grid-3">
+  <div class="card gold"><h4>Mobile robots</h4><p>Speed, driving mode, waypoints. The gate limits acceleration and forbids zones. The agent plans the route from a spoken goal.</p></div>
+  <div class="card gold"><h4>Robot arms</h4><p>Gripper force, joint velocity limits, named poses. The gate enforces force and workspace limits. The agent picks <em>which</em> pose, not the trajectory.</p></div>
+  <div class="card gold"><h4>Multi-robot systems</h4><p>A LangGraph planner drafts the mission, one controller agent per robot executes through its own gate, and a human approves the plan.</p></div>
+</div>
+
+<h2 id="lessons">Lessons learned on real robots</h2>
+<ol class="lesson-list">
+  <li><strong>Never give the LLM direct access to hardware.</strong><span>Manifest + deterministic gate: ranges, max step per command, rate limits. No path around it.</span></li>
+  <li><strong>One manifest, many consumers.</strong><span>Tools, validation, prompts and docs are all generated from the same YAML, so they never disagree.</span></li>
+  <li><strong>Keep the LLM in the slow loop.</strong><span>It reasons over seconds of data. Real-time control stays classic.</span></li>
+  <li><strong>Separate observers from actors.</strong><span>Advisory agents can analyse anything. Only one agent can command the robot.</span></li>
+  <li><strong>Demand structured output.</strong><span>EXECUTE / NEED_MORE_INFO / REFUSE plus a justification per step: parseable and auditable.</span></li>
+  <li><strong>Be provider-agnostic.</strong><span>Cloud APIs for development, local or self-hosted models for privacy and cost. One env var switches them (chapter 2).</span></li>
+  <li><strong>Log everything.</strong><span>Prompts, tool calls, tokens, latency. You'll need it for debugging, and for your papers.</span></li>
+  <li><strong>Always have a deterministic fallback.</strong><span>Timeouts and malformed answers happen. The robot must stay safe when the LLM doesn't answer.</span></li>
+</ol>
+
+<h2 id="run-it">Run it on your ROS 2</h2>
+<p>The chapter script works with or without ROS. Without ROS 2 it prints the messages it would publish. With ROS 2 sourced it publishes real <code>std_msgs</code> topics (tested on Jazzy).</p>
+<div class="code" data-file="terminal" data-download="code/ch7_ros2_bridge.py"><pre><code class="lang-bash"># terminal 1: no API key needed for the gate demo
+source /opt/ros/jazzy/setup.bash
+python ch7_ros2_bridge.py --no-llm     # drop --no-llm to let the agent drive
+
+# terminal 2: watch what reaches the robot
+source /opt/ros/jazzy/setup.bash
+ros2 topic echo /r80/cmd/speed</code></pre></div>
+<div class="callout tip"><p><code>rclpy</code> comes with your ROS 2 installation, not from pip. Run the script with the Python that ROS 2 was built for, with LangChain installed in that environment.</p></div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">I have a ROS 2 robot with these services and topics: &lt;list them&gt;. Create a YAML capability manifest with a range and max step per command, generate LangChain tools from it, and add a safety gate that validates every call before publishing to ROS 2. Use code/ch7_ros2_bridge.py as the reference pattern.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>The LLM is a high-level controller: it decides <em>what</em>, never <em>how</em> at 100 Hz.</li><li>Capability manifest + safety gate: the LLM proposes, deterministic code decides.</li><li>Observer agents advise, one controller acts, humans approve.</li><li>Same architecture, different robot: swap the manifest.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

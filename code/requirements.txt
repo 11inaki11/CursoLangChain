@@ -14,3 +14,6 @@ langchain-ollama         # Local models via Ollama
 # RAG (chapter 2c)
 langchain-text-splitters
 pypdf                    # only needed if you drop PDFs into data/manuals
+
+# ROS 2 bridge (chapter 7). rclpy comes with your ROS 2 install, not pip.
+pyyaml

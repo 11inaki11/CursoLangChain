@@ -68,12 +68,31 @@
     </div>
   </section>
 
+  <!-- ============================== GOLD: FIELD CHAPTER ============================== -->
+  <section class="section" style="padding-top:0">
+    <div class="inner" style="max-width:1000px">
+      <div class="gold-frame split">
+        <div>
+          <span class="gold-badge">★ FIELD-TESTED · HOW WE BUILD IT</span>
+          <h2 style="margin:16px 0 10px"><span class="gold-text">ROS 2 × LangChain</span> on real robots</h2>
+          <p style="color:var(--muted)">How we use LLM agents as high-level controllers of real robots at the BioRobotics Group: capability manifests, a safety gate the LLM can't bypass, and a slow reasoning loop on top of fast classic control.</p>
+          <a class="btn big" href="chapters/07-ros2-field.html" style="border-color:var(--gold);color:var(--gold)">Open the field chapter ▶</a>
+        </div>
+        <ul class="lesson-list" style="margin:0">
+          <li><strong>The LLM proposes, the gate decides</strong><span>Every command validated against a manifest.</span></li>
+          <li><strong>Slow loop over fast loop</strong><span>Reasoning in seconds, control at 100 Hz.</span></li>
+          <li><strong>Swap the manifest, keep the architecture</strong><span>Same stack, different robot.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================== ROADMAP ============================== -->
   <section class="section" id="roadmap">
     <div class="inner" style="max-width:900px">
       <div class="section-title">
         <div class="eyebrow">// COURSE MAP</div>
-        <h2>Eight stages, one robot squad</h2>
+        <h2>From one robot to real hardware</h2>
         <p>Each stage adds one piece to the same robots. By the end, they coordinate a mission on their own.</p>
       </div>
       <div class="roadmap" id="roadmap-list"></div>
@@ -114,7 +133,7 @@
     })();
 
     document.getElementById("roadmap-list").innerHTML = CHAPTERS.map((c) => `
-      <a class="stage" href="chapters/${c.slug}.html">
+      <a class="stage ${c.gold ? "gold" : ""}" href="chapters/${c.slug}.html">
         <span class="dot">${c.num}</span>
         <span class="body"><h4>${c.title}</h4><p>${c.sub}</p><div class="builds">+ ${c.builds}</div></span>
         <span class="time">${c.time}</span>

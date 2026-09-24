@@ -21,5 +21,6 @@ python ch2b_tools.py          # first robot agent with tools
 | `ch4_memory.py` | Checkpointer threads + summarization middleware |
 | `ch5_multiagent.py` | Supervisor + SCOUT + GRIP as a LangGraph graph |
 | `ch6_robot_control.py` | Interactive mission control with live streaming |
+| `ch7_ros2_bridge.py` | ★ ROS 2 bridge: tools from a capability manifest + safety gate (works with or without ROS 2) |
 
 Drop your own PDFs into `data/manuals/` and chapter 2c will index them too.

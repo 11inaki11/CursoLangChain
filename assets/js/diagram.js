@@ -8,7 +8,7 @@
 
 (() => {
   const NS = "http://www.w3.org/2000/svg";
-  const COLORS = { pink: "#ff2a6d", cyan: "#05d9e8", yellow: "#f9c80e", purple: "#b967ff", green: "#3dfc9b", orange: "#ff8a3d", dim: "#6f68a3" };
+  const COLORS = { pink: "#ff2a6d", cyan: "#05d9e8", yellow: "#f9c80e", purple: "#b967ff", green: "#3dfc9b", orange: "#ff8a3d", gold: "#ffcf40", dim: "#6f68a3" };
 
   function anchor(n, tx, ty) {
     // point on the border of node n in the direction of (tx, ty)
