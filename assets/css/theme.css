@@ -550,3 +550,13 @@ tr:last-child td { border-bottom: 0; }
 .cast .card { text-align: center; }
 .cast .card svg { width: 64px; height: 64px; margin: 0 auto 8px; display: block; }
 @media (max-width: 860px) { .cast { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- research group ---------- */
+.group-card { display: flex; align-items: center; gap: 16px; margin: 20px 0 0; padding: 16px 20px; border-radius: var(--radius); background: linear-gradient(135deg, rgba(61,252,155,.1), rgba(5,217,232,.08)); border: 1px solid rgba(61,252,155,.35); color: var(--text); text-decoration: none !important; transition: border-color .25s, box-shadow .25s, transform .25s; }
+.group-card:hover { border-color: var(--green); box-shadow: 0 0 18px rgba(61,252,155,.35); transform: translateY(-2px); }
+.group-card .group-ico { font-size: 1.8rem; }
+.group-card > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.group-card b { font-family: var(--font-display); font-size: 1.1rem; }
+.group-card small { color: var(--muted); font-size: .8rem; }
+.group-card .go { font-family: var(--font-mono); font-size: .78rem; color: var(--green); white-space: nowrap; }
+@media (max-width: 520px) { .group-card { flex-wrap: wrap; } }

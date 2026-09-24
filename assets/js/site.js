@@ -21,6 +21,12 @@ const CHAPTERS = [
   { slug: "07-discussion",    num: "07", title: "Debrief",                 sub: "Open questions",                   builds: "where this fits in your own robots", time: "30 min" },
 ];
 
+const GROUP = {
+  name: "BioRobotics Group",
+  center: "Centro de Automática y Robótica (CAR) · CSIC-UPM",
+  url: "https://biorobotics.car.upm-csic.es/",
+};
+
 // TODO: fill in real roles.
 const AUTHORS = [
   { name: "Iñaki Dellibarda", role: "Robotics · AI", url: "https://www.inakidellibarda.com/", palette: "pink" },
@@ -161,6 +167,11 @@ function buildFooter() {
       <div class="eyebrow">// THE CREW</div>
       <h3>Built by four robotics engineers</h3>
       <p class="footer-note">Liked the tutorial? Check out our work.</p>
+      <a class="group-card" href="${GROUP.url}" target="_blank" rel="noopener">
+        <span class="group-ico">🧬</span>
+        <span><small>We are part of the</small><b>${GROUP.name}</b><small>${GROUP.center}</small></span>
+        <span class="go">Visit the group ↗</span>
+      </a>
       <div class="authors">
         ${AUTHORS.map((a) => `
           <a class="author" href="${a.url}" ${a.url === "#" ? 'title="Portfolio coming soon"' : 'target="_blank" rel="noopener"'}>
