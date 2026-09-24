@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to the lab · Robot Agents</title>
+  <meta name="description" content="Learn LangChain and LangGraph through robotics: what the course covers, the robots, and how to power up your AI coding assistant.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="welcome">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>Welcome to the lab</h1>
+  <p class="lead">This course teaches <strong>LangChain</strong> and <strong>LangGraph</strong>, the most widely used open-source frameworks for building LLM agents, through one idea: every example is a robot.</p>
+  <div class="meta"><span class="chip pink">LangChain</span><span class="chip cyan">LangGraph</span><span class="chip yellow">Robotics-themed</span></div>
+</header>
+
+<h2 id="what-you-learn">What you'll learn</h2>
+<p>You'll build one robot agent and upgrade it chapter by chapter until a squad of robots completes missions from a plain-English order. Along the way you'll learn every core concept of modern LLM agents:</p>
+<div class="grid-3">
+  <div class="card"><h4>🧠 Models</h4><p>Plug any LLM (cloud or local) into the same agent and steer it with a system prompt.</p></div>
+  <div class="card"><h4>🦾 Tools</h4><p>Turn Python functions into actions the robot can decide to take.</p></div>
+  <div class="card"><h4>📚 RAG</h4><p>Let the robot read its manuals before acting, instead of guessing.</p></div>
+  <div class="card"><h4>💬 Messages</h4><p>Understand what the agent actually sees, and how agents talk to each other.</p></div>
+  <div class="card"><h4>💾 Memory</h4><p>Conversations that persist, and context that never overflows.</p></div>
+  <div class="card"><h4>🕸 Multi-agent graphs</h4><p>Several robots, one shared state, a supervisor routing the work.</p></div>
+</div>
+
+<h2 id="the-cast">Meet the cast</h2>
+<div class="cast">
+  <div class="card"><span data-sprite="pink"></span><h4>R-80</h4><p>The hero. A 1986 lab robot that grows from chatbot to autonomous agent.</p></div><div class="card"><span data-sprite="cyan"></span><h4>SCOUT</h4><p>Fast explorer. Reads sensors and manuals, can't carry anything.</p></div><div class="card"><span data-sprite="yellow"></span><h4>GRIP</h4><p>Strong robot with a gripper. Moves items around the lab.</p></div><div class="card"><span data-sprite="purple"></span><h4>SUPERVISOR</h4><p>Coordinates the squad and decides who acts next.</p></div>
+</div>
+<div class="sim" id="sim-tour" data-scenario="welcome-tour"></div>
+
+<h2 id="philosophy">Concepts over syntax</h2>
+<p>Let's be honest: <strong>today everybody writes code with an AI assistant</strong>. Memorising the exact arguments of a function is no longer the bottleneck. Knowing <em>what is possible</em> and <em>which piece solves which problem</em> is.</p>
+<p>That's what this course optimises for. Each chapter opens with a <strong>briefing</strong> (the concept, what your robot gains, the key terms), then shows it working in a simulation. The real, runnable code is always there, and every chapter ends with a ready-made prompt so your AI copilot can build the next step with you.</p>
+<div class="grid-3">
+  <div class="card"><h4>1 · Understand</h4><p>The concept and the capability it unlocks.</p></div>
+  <div class="card"><h4>2 · Watch</h4><p>Press ▶ and see the agent think, call tools and read, step by step.</p></div>
+  <div class="card"><h4>3 · Build</h4><p>Copy the real script, or hand the prompt to your AI copilot.</p></div>
+</div>
+
+<h2 id="power-ups">Power-ups for your AI copilot</h2>
+<p>Here's the cheat code. LangChain moves fast, and your assistant's training data is always a few versions behind. The LangChain team publishes two free power-ups that plug the <strong>live docs</strong> and <strong>expert skills</strong> straight into your coding assistant. Install them once, and your copilot writes current LangChain code instead of hallucinating last year's API.</p>
+<div class="callout tip"><p><strong>All credit to LangChain.</strong> The MCP servers, the Skills and the prompts below are made and maintained by the LangChain team. Sources: <a href="https://docs.langchain.com/use-these-docs" target="_blank" rel="noopener">docs.langchain.com/use-these-docs</a> and <a href="https://github.com/langchain-ai/langchain-skills" target="_blank" rel="noopener">github.com/langchain-ai/langchain-skills</a>.</p></div>
+
+<h3>Power-up 1 · Docs MCP servers</h3>
+<p>Two <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a> servers that let your assistant search the docs in real time. <code>docs-langchain</code> has the guides and tutorials (the <em>why</em> and <em>how</em>). <code>reference-langchain</code> has the API reference (exact classes, parameters and signatures). Connect both. Pick your tool:</p>
+<div class="tabs" data-group="copilot"><div class="tab-panel" data-tab="Claude Code"><p>Run in your project folder (add <code>--scope user</code> to make them available in every project):</p><div class="code" data-file="terminal"><pre><code class="lang-bash">claude mcp add --transport http docs-langchain https://docs.langchain.com/mcp
+claude mcp add --transport http reference-langchain https://reference.langchain.com/mcp</code></pre></div></div><div class="tab-panel" data-tab="Codex CLI"><div class="code" data-file="terminal"><pre><code class="lang-bash">codex mcp add langchain-docs --url https://docs.langchain.com/mcp
+codex mcp add langchain-reference --url https://reference.langchain.com/mcp</code></pre></div></div><div class="tab-panel" data-tab="Cursor"><p>Add to your MCP settings file:</p><div class="code" data-file="mcp.json"><pre><code class="lang-bash">{
+  "mcpServers": {
+    "docs-langchain": {
+      "url": "https://docs.langchain.com/mcp"
+    },
+    "reference-langchain": {
+      "url": "https://reference.langchain.com/mcp"
+    }
+  }
+}</code></pre></div></div><div class="tab-panel" data-tab="VS Code"><p>Add to your MCP settings file:</p><div class="code" data-file="mcp.json"><pre><code class="lang-bash">{
+  "servers": {
+    "docs-langchain": {
+      "url": "https://docs.langchain.com/mcp"
+    },
+    "reference-langchain": {
+      "url": "https://reference.langchain.com/mcp"
+    }
+  }
+}</code></pre></div></div><div class="tab-panel" data-tab="Claude Desktop"><p>Open <strong>Settings → Connectors</strong> and add both URLs:</p><div class="code" data-file="connectors"><pre><code class="lang-bash">https://docs.langchain.com/mcp
+https://reference.langchain.com/mcp</code></pre></div></div><div class="tab-panel" data-tab="Deep Agents Code"><p>Add to <code>~/.deepagents/.mcp.json</code> (all projects) or a project-level <code>.mcp.json</code>, then restart <code>dcode</code>:</p><div class="code" data-file=".mcp.json"><pre><code class="lang-bash">{
+  "mcpServers": {
+    "docs-langchain": {
+      "type": "http",
+      "url": "https://docs.langchain.com/mcp"
+    },
+    "reference-langchain": {
+      "type": "http",
+      "url": "https://reference.langchain.com/mcp"
+    }
+  }
+}</code></pre></div></div><div class="tab-panel" data-tab="Antigravity"><p>Add to your MCP settings file:</p><div class="code" data-file="mcp settings"><pre><code class="lang-bash">{
+  "mcpServers": {
+    "docs-langchain": {
+      "serverUrl": "https://docs.langchain.com/mcp"
+    },
+    "reference-langchain": {
+      "serverUrl": "https://reference.langchain.com/mcp"
+    }
+  }
+}</code></pre></div></div><div class="tab-panel" data-tab="Just ask"><p>Don't want to look up your client's config? Paste LangChain's official prompt and let your assistant do it:</p><div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Connect both LangChain documentation MCP servers to my coding agent so it can look up current LangChain, LangGraph, and LangSmith docs and API reference.
+
+Servers to add:
+
+* `docs-langchain`: https://docs.langchain.com/mcp
+* `reference-langchain`: https://reference.langchain.com/mcp
+
+Detect which agent or editor I am using (Claude Code, Cursor, Codex CLI, Claude Desktop, Deep Agents Code, VS Code, Antigravity, or another MCP-compatible client). Use the matching setup from https://docs.langchain.com/use-these-docs.md:
+
+* Claude Code: `claude mcp add --transport http` for each server (project scope by default; use `--scope user` only if I ask for global access).
+* Codex CLI: `codex mcp add` with each server URL.
+* Cursor, Deep Agents Code, VS Code, or Antigravity: merge both entries into the MCP settings JSON using the field names shown on that page for my client.
+* Claude Desktop: add both URLs under Settings &gt; Connectors.
+
+Do not invent alternate MCP URLs. After configuring, confirm both servers are listed and reachable.</div>
+  <div class="credit">Prompt by <a href="https://docs.langchain.com/use-these-docs" target="_blank" rel="noopener">LangChain · Use these docs ↗</a></div>
+</div></div></div>
+
+<h3>Power-up 2 · LangChain Skills</h3>
+<p>Skills are packaged expert instructions for LangChain, LangGraph and Deep Agents tasks (quickstarts, RAG, memory, human-in-the-loop…). Your assistant loads them automatically when the task matches.</p>
+<div class="tabs"><div class="tab-panel" data-tab="Any agent (npx)"><div class="code" data-file="terminal"><pre><code class="lang-bash"># in your project
+npx skills add langchain-ai/langchain-skills --skill '*' --yes
+
+# or globally, for every project
+npx skills add langchain-ai/langchain-skills --skill '*' --yes --global</code></pre></div></div><div class="tab-panel" data-tab="Claude Code plugin"><p>Inside Claude Code:</p><div class="code" data-file="claude code"><pre><code class="lang-bash">/plugin marketplace add langchain-ai/langchain-skills
+/plugin install langchain-skills@langchain-skills</code></pre></div></div><div class="tab-panel" data-tab="Just ask"><div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Install LangChain Skills for my coding agent so it can perform better on LangChain, LangGraph, and Deep Agents tasks.
+
+Use the Agent Skills installer from https://github.com/langchain-ai/langchain-skills:
+
+npx skills add langchain-ai/langchain-skills --skill '*' --yes
+
+If I ask for a global install instead, use:
+
+npx skills add langchain-ai/langchain-skills --skill '*' --yes --global
+
+Detect which agent or editor I am using. If I use Claude Code and prefer the plugin path, follow the marketplace install from that repository README (`/plugin marketplace add` then `/plugin install`). Do not invent alternate skill package names or install URLs. After installing, confirm the skills are available to the agent.</div>
+  <div class="credit">Prompt by <a href="https://docs.langchain.com/use-these-docs" target="_blank" rel="noopener">LangChain ↗</a> · skills from <a href="https://github.com/langchain-ai/langchain-skills" target="_blank" rel="noopener">langchain-ai/langchain-skills ↗</a></div>
+</div></div></div>
+
+<h2 id="how-to-use">How to use this site</h2>
+<ol class="steps">
+  <li><strong>Read the briefing</strong>Each chapter starts with the concept in three boxes.</li>
+  <li><strong>Press ▶ Run</strong>Simulations are emulated in your browser: no API key, nothing to install.</li>
+  <li><strong>Run it for real</strong>Grab the scripts from <code>code/</code>. Same robots, same world, a real LLM. Setup is in the next chapter.</li>
+</ol>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>You'll learn LangChain + LangGraph by upgrading one robot, then a squad.</li><li>Focus on concepts and capabilities. Your AI copilot handles the syntax.</li><li>Install LangChain's docs MCP servers and Skills so your copilot writes up-to-date code.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

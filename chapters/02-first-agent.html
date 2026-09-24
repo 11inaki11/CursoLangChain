@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your first robot agent · Robot Agents</title>
+  <meta name="description" content="Build a robot agent with LangChain: choose the model provider, write a system prompt, turn Python functions into tools, add RAG over robot manuals.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="02-first-agent">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>Your first robot agent</h1>
+  <p class="lead">R-80 gets a brain (a model and a system prompt), hands (tools) and a manual it can read (RAG). Three steps, one agent.</p>
+  <div class="meta"><span class="chip pink">2a · Brain</span><span class="chip yellow">2b · Tools</span><span class="chip cyan">2c · RAG</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p><code>create_agent()</code> takes three ingredients: a <strong>model</strong> (who thinks), a <strong>system prompt</strong> (who it is and its rules) and <strong>tools</strong> (what it can do). RAG is simply one more tool.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>A brain you can swap in one line</li><li>An identity and rules it always follows</li><li>Actions in the world, and knowledge from its manuals</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>Provider</strong>: who runs the LLM</li><li><strong>System prompt</strong>: permanent instructions</li><li><strong>Tool</strong>: function the LLM may call</li><li><strong>RAG</strong>: search your docs, then answer</li></ul></div>
+</div>
+
+<h2 id="brain">2a · The brain: provider + system prompt</h2>
+<p>Creating an agent means making two big decisions before any tool exists: <strong>which LLM runs underneath</strong> (the provider) and <strong>who the robot is</strong> (the system prompt).</p>
+
+<h3>Decision 1 · The provider</h3>
+<p>The provider is the company or server that runs the underlying LLM: Google, OpenAI, Anthropic, DeepSeek, Mistral, or your own GPU with Ollama. LangChain puts all of them behind the <strong>same interface</strong>, so the rest of your agent never changes. Switch tabs and compare: only the model line changes.</p>
+<div class="tabs" data-group="provider"><div class="tab-panel" data-tab="Gemini"><div class="code" data-file="brain · Gemini" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("google_genai:gemini-3.7-flash")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_google_genai import ChatGoogleGenerativeAI
+model = ChatGoogleGenerativeAI(model="gemini-3.7-flash")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div><div class="tab-panel" data-tab="GPT · OpenAI"><div class="code" data-file="brain · GPT · OpenAI" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("openai:gpt-5.5")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_openai import ChatOpenAI
+model = ChatOpenAI(model="gpt-5.5")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div><div class="tab-panel" data-tab="Claude · Anthropic"><div class="code" data-file="brain · Claude · Anthropic" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("anthropic:claude-sonnet-5")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_anthropic import ChatAnthropic
+model = ChatAnthropic(model="claude-sonnet-5")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div><div class="tab-panel" data-tab="DeepSeek"><div class="code" data-file="brain · DeepSeek" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("deepseek:deepseek-chat")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_deepseek import ChatDeepSeek
+model = ChatDeepSeek(model="deepseek-chat")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div><div class="tab-panel" data-tab="Mistral"><div class="code" data-file="brain · Mistral" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("mistralai:mistral-large-latest")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_mistralai import ChatMistralAI
+model = ChatMistralAI(model="mistral-large-latest")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div><div class="tab-panel" data-tab="Local · Ollama"><div class="code" data-file="brain · Local · Ollama" data-hl="5,9"><pre><code class="lang-python">from langchain.agents import create_agent
+
+# Option A: universal one-liner (recommended)
+from langchain.chat_models import init_chat_model
+model = init_chat_model("ollama:qwen3:8b")
+
+# Option B: the provider's own class (exposes provider-specific options)
+from langchain_ollama import ChatOllama
+model = ChatOllama(model="qwen3:8b")
+
+# Identical for every provider:
+agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</code></pre></div></div></div>
+<div class="grid-2">
+  <div class="card"><h4>Option A · <code>init_chat_model("provider:model")</code></h4><p>One import for every provider. Change a string (or an env var) to swap brains. You can even pass the string straight to <code>create_agent(model="…")</code>.</p></div>
+  <div class="card"><h4>Option B · the provider's class</h4><p><code>ChatOpenAI</code>, <code>ChatAnthropic</code>… Same interface, plus provider-only settings. Needs that provider's package.</p></div>
+</div>
+<p>How to choose? Compare them on the same robot:</p>
+<div class="sim" id="sim-models" data-scenario="ch2a-models"></div>
+<div class="callout tip"><p><strong>Cloud or local?</strong> Cloud models are faster and smarter out of the box. A local model on your own GPU is private and has no per-call cost, but tool calling is only reliable with capable models.</p></div>
+
+<h3>Decision 2 · The system prompt</h3>
+<p>The <strong>system prompt</strong> is a hidden first message (<code>SystemMessage</code>) that the model reads before every turn. The operator never sees it, but it shapes everything: who the robot is, what it knows about itself, which rules it must never break, and how it formats its answers. Without it, the model is a generic chatbot that doesn't even know it has wheels.</p>
+<div class="grid-2">
+  <div class="card"><h4>🪪 Role</h4><p>"You are R-80, a lab robot built in 1986."</p></div>
+  <div class="card"><h4>📏 Facts &amp; limits</h4><p>"Your max payload is 2.5 kg."</p></div>
+  <div class="card"><h4>🚧 Rules</h4><p>"Always scan before picking something up. Never leave the lab."</p></div>
+  <div class="card"><h4>🗣 Style &amp; format</h4><p>"Max 2 sentences." or "Reply only with JSON."</p></div>
+</div>
+<p>Same model, same question, three system prompts:</p>
+<div class="sim" id="sim-system" data-scenario="ch2a-system"></div>
+<div class="code" data-file="ch2a_models.py" data-download="code/ch2a_models.py" data-run="sim-models"><pre><code class="lang-python">SYSTEM_PROMPT = (
+    "You are R-80, a friendly lab robot built in 1986. "
+    "You speak like a retro computer terminal. Answer in at most 2 sentences."
+)
+
+BRAINS = [
+    DEFAULT_MODEL,             # Gemini (cloud)
+    "deepseek:deepseek-chat",  # DeepSeek (cloud)
+    LOCAL_MODEL,               # Ollama (local / SSH tunnel)
+]
+
+if __name__ == "__main__":
+    for brain in BRAINS:
+        try:
+            agent = create_agent(model=get_model(brain), system_prompt=SYSTEM_PROMPT)
+            result = agent.invoke(
+                {"messages": [{"role": "user", "content": "Boot up and introduce yourself."}]}
+            )
+            print(f"\n[{brain}]\n{result['messages'][-1].text}")
+        except Exception as exc:  # missing key, Ollama not running...
+            print(f"\n[{brain}] skipped -&gt; {exc}")</code></pre></div>
+
+<h2 id="tools">2b · Tools: give it hands</h2>
+<p>A tool is just a Python function. The <code>@tool</code> decorator reads its <strong>name, type hints and docstring</strong> and shows them to the LLM, which then decides <em>when</em> to call it and <em>with which arguments</em>. The function itself runs in your code, and its return value goes back to the LLM as an observation.</p>
+<div class="wide side-by-side">
+  <div class="code" data-file="ch2b_tools.py" data-download="code/ch2b_tools.py"><pre><code class="lang-python">def make_robot_tools(robot: str) -&gt; list:
+    """Build the toolset for one robot. Reused by every later chapter."""
+
+    @tool
+    def move_to(location: str) -&gt; str:
+        """Drive the robot to a location. Valid: dock, shelf_a, workbench, door, shelf_b."""
+        return WORLD.move_to(robot, location)
+
+    @tool
+    def scan_surroundings() -&gt; str:
+        """Look around: items and robots at the current location."""
+        return WORLD.scan(robot)
+
+    @tool
+    def check_battery() -&gt; str:
+        """Read the battery level (%)."""
+        return WORLD.battery(robot)
+
+    @tool
+    def pick(item: str) -&gt; str:
+        """Pick up an item at the current location with the gripper."""
+        return WORLD.pick(robot, item)
+
+    @tool
+    def place() -&gt; str:
+        """Place the item being held at the current location."""
+        return WORLD.place(robot)
+
+    @tool
+    def charge() -&gt; str:
+        """Charge the battery to 100%. Only works at the dock."""
+        return WORLD.charge(robot)
+
+    return [move_to, scan_surroundings, check_battery, pick, place, charge]</code></pre></div>
+  <div class="widget tool-wire"></div>
+</div>
+<div class="callout warn"><p><strong>The docstring is the prompt.</strong> The LLM never sees your function body, only its name, arguments and docstring. Write them for the model. And only expose the functions you want the LLM to reach.</p></div>
+<p>Now give R-80 an order and watch it chain tools on its own:</p>
+<div class="sim" id="sim-tools" data-scenario="ch2b-tools"></div>
+<div class="code" data-file="ch2b_tools.py" data-download="code/ch2b_tools.py" data-run="sim-tools"><pre><code class="lang-python">if __name__ == "__main__":
+    WORLD.add_robot("r80")
+    agent = create_agent(
+        model=get_model(),
+        tools=make_robot_tools("r80"),
+        system_prompt=SYSTEM_PROMPT,
+    )
+    result = agent.invoke(
+        {"messages": [{"role": "user", "content": "Bring the red cube to the workbench."}]}
+    )
+    for message in result["messages"]:
+        message.pretty_print()
+    print("\n" + WORLD.render())</code></pre></div>
+
+<h2 id="rag">2c · RAG: give it a manual</h2>
+
+<h3>What is RAG?</h3>
+<p><strong>Retrieval-Augmented Generation</strong>: before the LLM answers, <em>retrieve</em> the relevant pieces of your own documents and <em>augment</em> the prompt with them, so the model <em>generates</em> its answer from real facts.</p>
+<div class="grid-3">
+  <div class="card"><h4>The problem</h4><p>The LLM was trained on the internet, not on R-80's manual. Ask for its payload and it will guess a plausible, wrong number: a hallucination.</p></div>
+  <div class="card"><h4>Why not paste everything?</h4><p>Manuals can be thousands of pages. Too big, slow and expensive for the context window, and the model gets lost in the noise.</p></div>
+  <div class="card highlight"><h4>RAG</h4><p>Only send the 2–4 chunks that matter for <em>this</em> question. Accurate, cheap, and you can cite the source.</p></div>
+</div>
+<p>It works in two phases. <strong>Indexing</strong> happens once: load the documents, split them into chunks, turn each chunk into a vector with an <em>embeddings model</em> and store the vectors. <strong>Retrieval</strong> happens for every question: embed the question the same way, find the nearest chunks, and put them in the prompt. Try it:</p>
+<div class="wide"><div class="widget rag-explorer"></div></div>
+<h3>Classic RAG vs agentic RAG</h3>
+<div class="grid-2">
+  <div class="card"><h4>Classic</h4><p>Always retrieve, then answer. Simple, but it searches the manuals even for "hello".</p></div>
+  <div class="card highlight"><h4>Agentic (what we build)</h4><p>Retrieval is a <strong>tool</strong>. The agent decides <em>when</em> to search and <em>what</em> to search for, and can search again if the first result wasn't enough.</p></div>
+</div>
+
+<h3>R-80 with RAG</h3>
+<p>We wrap the retriever as a <code>search_manuals</code> tool. The system prompt tells R-80 to check the manuals before anything risky:</p>
+<div class="sim" id="sim-rag" data-scenario="ch2c-rag"></div>
+<div class="code" data-file="ch2c_rag.py" data-download="code/ch2c_rag.py" data-run="sim-rag"><pre><code class="lang-python">def build_manual_tool(k: int = 3):
+    """Embed the manuals once and return a `search_manuals` tool."""
+    splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50)
+    chunks = splitter.split_documents(load_manuals())
+    store = InMemoryVectorStore.from_documents(chunks, get_embeddings())  # text -&gt; vectors
+    retriever = store.as_retriever(search_kwargs={"k": k})               # top-k nearest chunks
+
+    @tool
+    def search_manuals(query: str) -&gt; str:
+        """Search the R-80 service manual and the lab safety rules (specs, limits, zones, error codes)."""
+        hits = retriever.invoke(query)
+        return "\n\n".join(f"[{d.metadata['source']}] {d.page_content}" for d in hits)
+
+    return search_manuals</code></pre></div>
+<div class="download-row">
+  <a class="btn" href="../code/data/manuals/r80_manual.md" download>📄 r80_manual.md</a>
+  <a class="btn" href="../code/data/manuals/lab_safety.md" download>📄 lab_safety.md</a>
+  <span class="footer-note">Drop your own PDFs into <code>code/data/manuals/</code> and they are indexed too.</span>
+</div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Add a new tool open_door() to make_robot_tools in code/ch2b_tools.py. It should only work when the robot is at the door. Write a docstring the LLM can understand, then update the system prompt so R-80 asks for confirmation before opening it.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>Provider = who runs the LLM. Swapping it is one string: <code>"provider:model"</code>.</li><li>The system prompt sets identity, facts, rules and output format, on every turn.</li><li><code>@tool</code> turns a function into an action. The docstring is what the LLM reads.</li><li>RAG = retrieve relevant chunks, then answer from them. As a tool, the agent decides when.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

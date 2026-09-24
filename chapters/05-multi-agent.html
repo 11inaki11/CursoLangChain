@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The robot squad · Robot Agents</title>
+  <meta name="description" content="Multi-agent systems with LangGraph: supervisor pattern, shared state, conditional edges and cycles, with two robots.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="05-multi-agent">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>The robot squad</h1>
+  <p class="lead">One robot is not enough. SCOUT explores and reads manuals, GRIP carries things, and a supervisor decides who acts next, all in one LangGraph graph.</p>
+  <div class="meta"><span class="chip pink">StateGraph</span><span class="chip cyan">Conditional edges</span><span class="chip yellow">Supervisor</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>A LangGraph <strong>graph</strong> is a state machine where nodes can be LLM agents. A shared <strong>state</strong> flows through the nodes, and <strong>conditional edges</strong> read it to decide where to go next, including going back.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>Specialists instead of one do-it-all robot</li><li>A coordinator that plans and delegates</li><li>Loops: retry and report back until the mission is done</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>State</strong>: shared data every node reads/updates</li><li><strong>Conditional edge</strong>: transition chosen at runtime</li><li><strong>Supervisor</strong>: node that routes work</li></ul></div>
+</div>
+
+<h2 id="graphs">Graphs are state machines</h2>
+<p>If you have programmed a robot's state machine, you already know LangGraph. <strong>Nodes</strong> are states that do work, <strong>edges</strong> are transitions, and the <strong>shared state</strong> decides which transition fires. The difference: here an LLM can choose the transition.</p>
+<div class="diagram" data-diagram="ch5-graph"></div>
+
+<h2 id="run-it">Run the squad</h2>
+<p>Keep an eye on the diagram above while you play: each routing decision lights up the node that acts next.</p>
+<div class="sim" id="sim-squad" data-scenario="ch5-squad"></div>
+
+<h2 id="build-it">How it's built</h2>
+<h3>1 · Shared state</h3>
+<div class="code" data-file="ch5_multiagent.py" data-download="code/ch5_multiagent.py"><pre><code class="lang-python">class SquadState(MessagesState):
+    next: str       # who acts next
+    task: str       # instruction for that robot
+    rounds: int     # safety counter against infinite loops</code></pre></div>
+<h3>2 · Workers reuse chapter 2 tools</h3>
+<p>Each worker gets the supervisor's order as a <code>HumanMessage</code> with a <code>[FROM: supervisor]</code> header, as in chapter 3.</p>
+<div class="code" data-file="ch5_multiagent.py" data-download="code/ch5_multiagent.py"><pre><code class="lang-python">scout_agent = create_agent(
+    model=get_model(),
+    tools=[t for t in make_robot_tools("scout") if t.name in {"move_to", "scan_surroundings", "check_battery"}]
+    + [build_manual_tool()],
+    system_prompt="You are SCOUT, a fast explorer robot. You cannot pick things up. Report findings briefly.",
+)
+grip_agent = create_agent(
+    model=get_model(),
+    tools=make_robot_tools("grip"),
+    system_prompt="You are GRIP, a strong robot with a gripper. Execute the task and report briefly.",
+)
+
+
+def make_worker(name: str, agent):
+    def node(state: SquadState) -&gt; dict:
+        # From the worker's point of view the supervisor is an external entity -&gt; HumanMessage,
+        # with a header so it knows who is talking.
+        order = HumanMessage(f"[FROM: supervisor] {state['task']}")
+        result = agent.invoke({"messages": [order]})
+        return {"messages": [AIMessage(content=result["messages"][-1].text, name=name)]}
+
+    return node</code></pre></div>
+<h3>3 · Supervisor + conditional edges</h3>
+<div class="code" data-file="ch5_multiagent.py" data-download="code/ch5_multiagent.py" data-run="sim-squad"><pre><code class="lang-python">class Route(BaseModel):
+    next: Literal["scout", "grip", "FINISH"] = Field(description="Which robot acts next, or FINISH.")
+    task: str = Field(description="Short, concrete instruction for that robot.")
+
+
+SUPERVISOR_PROMPT = (
+    "You coordinate two lab robots. SCOUT explores and reads manuals, GRIP carries items. "
+    "Given the mission log, choose who acts next and give them one concrete task. "
+    "Choose FINISH when the mission is complete."
+)
+router = get_model().with_structured_output(Route)
+
+
+def supervisor(state: SquadState) -&gt; dict:
+    log = "\n".join(f"{m.name or m.type}: {m.text}" for m in state["messages"])
+    decision = router.invoke(
+        [SystemMessage(SUPERVISOR_PROMPT), HumanMessage(f"Mission log:\n{log}\n\nWho acts next?")]
+    )
+    rounds = state.get("rounds", 0) + 1
+    print(f"  [supervisor] -&gt; {decision.next}: {decision.task}")
+    return {"next": "FINISH" if rounds &gt; MAX_ROUNDS else decision.next, "task": decision.task, "rounds": rounds}
+
+
+# ---------- 4. Wire the graph ----------
+builder = StateGraph(SquadState)
+builder.add_node("supervisor", supervisor)
+builder.add_node("scout", make_worker("scout", scout_agent))
+builder.add_node("grip", make_worker("grip", grip_agent))
+
+builder.add_edge(START, "supervisor")
+builder.add_conditional_edges(
+    "supervisor",
+    lambda state: state["next"],
+    {"scout": "scout", "grip": "grip", "FINISH": END},
+)
+builder.add_edge("scout", "supervisor")  # cycles: workers always report back
+builder.add_edge("grip", "supervisor")
+squad = builder.compile()</code></pre></div>
+<div class="callout warn"><p><strong>Cycles need a brake.</strong> The <code>rounds</code> counter forces FINISH after a few loops, so a confused supervisor can't bounce the robots around forever.</p></div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Add a third robot, CHARGER, to the LangGraph squad in code/ch5_multiagent.py. It can move to other robots and recharge them. Add it as a node, add it to the supervisor's Route options, and make the supervisor send it when a robot's battery is below 30%.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>A LangGraph graph = shared state + nodes + (conditional) edges.</li><li>Supervisor pattern: one LLM routes, specialised agents execute.</li><li>Agents and tools from earlier chapters plug in unchanged.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

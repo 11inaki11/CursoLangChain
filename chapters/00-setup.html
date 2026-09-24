@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Boot sequence · Robot Agents</title>
+  <meta name="description" content="Set up Python, choose an LLM provider (Gemini, OpenAI, Claude, DeepSeek, Mistral or local Ollama) and run the robot lab.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="00-setup">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>Boot sequence</h1>
+  <p class="lead">Ten minutes to get the lab running: Python, one LLM provider of your choice, and a robot that already moves without any AI.</p>
+  <div class="meta"><span class="chip cyan">Python 3.10+</span><span class="chip pink">1 API key (or local)</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>An agent needs three things to run: <strong>code</strong>, a <strong>model provider</strong> (whoever runs the LLM) and a <strong>world</strong> to act on. Here we set up all three.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>A Python environment with LangChain + LangGraph</li><li>Access to an LLM: cloud API or your own GPU</li><li>Lab 80: a simulated world to control</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>Provider</strong>: company or server that runs the LLM</li><li><strong>API key</strong>: your password to a cloud provider</li><li><strong>.env</strong>: local file that keeps keys out of your code</li></ul></div>
+</div>
+
+<h2 id="get-the-code">Get the code</h2>
+<div class="code" data-file="terminal"><pre><code class="lang-bash">git clone https://github.com/11inaki11/CursoLangChain.git
+cd CursoLangChain/code
+python -m venv .venv &amp;&amp; source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt</code></pre></div>
+<div class="download-row">
+  <a class="btn primary" href="https://github.com/11inaki11/CursoLangChain/archive/refs/heads/main.zip">⬇ Download all code (.zip)</a>
+  <a class="btn" href="../code/requirements.txt" download>requirements.txt</a>
+  <a class="btn" href="../code/.env.example" download>.env.example</a>
+</div>
+
+<h2 id="api-keys">Choose your provider</h2>
+<p>Any of these works for the whole course. Pick one, get the key, and put the two lines in <code>code/.env</code> (copy <code>.env.example</code> first). Your choice is remembered, and chapter 2 will show the same provider.</p>
+<div class="tabs" data-group="provider"><div class="tab-panel" data-tab="Gemini"><dl class="kv">
+  <dt>Get a key</dt><dd><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio ↗</a></dd>
+  <dt>Package</dt><dd><code>pip install langchain-google-genai</code></dd>
+  <dt>Model string</dt><dd><code>google_genai:gemini-3.7-flash</code></dd>
+  <dt>Notes</dt><dd>Free tier with rate limits. The easiest way to follow the course, and it also provides the embeddings for RAG.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=google_genai:gemini-3.7-flash
+GOOGLE_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="GPT · OpenAI"><dl class="kv">
+  <dt>Get a key</dt><dd><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform ↗</a></dd>
+  <dt>Package</dt><dd><code>pip install langchain-openai</code></dd>
+  <dt>Model string</dt><dd><code>openai:gpt-5.5</code></dd>
+  <dt>Notes</dt><dd>Pay as you go with prepaid credits. Also offers embeddings for RAG.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=openai:gpt-5.5
+OPENAI_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="Claude · Anthropic"><dl class="kv">
+  <dt>Get a key</dt><dd><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console ↗</a></dd>
+  <dt>Package</dt><dd><code>pip install langchain-anthropic</code></dd>
+  <dt>Model string</dt><dd><code>anthropic:claude-sonnet-5</code></dd>
+  <dt>Notes</dt><dd>Pay as you go. No embeddings API: use Gemini, OpenAI or Ollama embeddings for RAG.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=anthropic:claude-sonnet-5
+ANTHROPIC_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="DeepSeek"><dl class="kv">
+  <dt>Get a key</dt><dd><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">DeepSeek Platform ↗</a></dd>
+  <dt>Package</dt><dd><code>pip install langchain-deepseek</code></dd>
+  <dt>Model string</dt><dd><code>deepseek:deepseek-chat</code></dd>
+  <dt>Notes</dt><dd>Pay as you go, with a very low price per token. No embeddings API.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=deepseek:deepseek-chat
+DEEPSEEK_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="Mistral"><dl class="kv">
+  <dt>Get a key</dt><dd><a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">Mistral console ↗</a></dd>
+  <dt>Package</dt><dd><code>pip install langchain-mistralai</code></dd>
+  <dt>Model string</dt><dd><code>mistralai:mistral-large-latest</code></dd>
+  <dt>Notes</dt><dd>European provider. Check its pricing page for the current plans.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=mistralai:mistral-large-latest
+MISTRAL_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="Local · Ollama"><dl class="kv">
+  <dt>Install</dt><dd><a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com ↗</a> then <code>ollama pull qwen3:8b</code></dd>
+  <dt>Package</dt><dd><code>pip install langchain-ollama</code></dd>
+  <dt>Model string</dt><dd><code>ollama:qwen3:8b</code></dd>
+  <dt>Notes</dt><dd>No key and no per-call cost: runs on your laptop or your own GPU server. Pick a model with good tool calling.</dd>
+</dl>
+<div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=ollama:qwen3:8b
+OLLAMA_BASE_URL=http://localhost:11434</code></pre></div><div class="code" data-file="ssh tunnel"><pre><code class="lang-bash"># Model on a remote GPU box? Tunnel its port to your laptop:
+ssh -N -L 11434:localhost:11434 user@gpu-server</code></pre></div></div></div>
+<div class="callout warn"><p><strong>Never commit your <code>.env</code>.</strong> It's already in <code>.gitignore</code>. Treat API keys like passwords: they are billed to you.</p></div>
+
+<h2 id="the-lab">Meet the lab (no AI yet)</h2>
+<p><code>robot_world.py</code> is the "hardware": a pure-Python lab with five stations, three items and robots that burn 2% battery per grid step. Every chapter controls this same world.</p>
+<div class="code" data-file="robot_world.py" data-download="code/robot_world.py"><pre><code class="lang-python">"""
+robot_world.py — a tiny, dependency-free robot lab.
+
+This is the "hardware" every chapter talks to. There is no LLM here: just
+plain Python that keeps track of where the robots are, what they carry and
+how much battery they have left. The agents in later chapters control it
+through tools.
+
+    y
+    0  DOCK . . . . . . SHELF_A
+    1  .    . . . . . . .
+    2  .    . . . . . . .
+    3  .    . . WORKBENCH . . .
+    4  .    . . . . . . .
+    5  DOOR . . . . . . SHELF_B
+       0    1 2 3 4 5 6 7   x
+"""</code></pre></div>
+<div class="code" data-file="output"><pre><code class="lang-bash">$ python robot_world.py
+r80 arrived at shelf_a after 7 steps. Battery: 86%.
+r80 picked up red_cube.
+r80 arrived at workbench after 7 steps. Battery: 72%.
+r80 placed red_cube at workbench.</code></pre></div>
+<div class="callout robot"><p><strong>No LLM yet.</strong> These are plain function calls that <em>you</em> ordered. In chapter 2 we hand the same functions to an LLM and let <em>it</em> decide which to call.</p></div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Set up a Python virtual environment for the code/ folder of this repo, install requirements.txt, create code/.env from .env.example for my provider, and run robot_world.py to check everything works.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>Pick any provider: Gemini, GPT, Claude, DeepSeek, Mistral or a local model.</li><li>Keys live in <code>.env</code>, never in code.</li><li><code>robot_world.py</code> is the shared lab every chapter drives.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

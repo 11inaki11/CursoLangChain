@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Robot Agents · LangChain & LangGraph</title>
+  <meta name="description" content="A hands-on, robot-themed tutorial to build LLM agents with LangChain and LangGraph: models, tools, RAG, memory and multi-agent systems. Interactive simulations plus real, runnable code.">
+  <meta property="og:title" content="Robot Agents · LangChain & LangGraph">
+  <meta property="og:description" content="Build LLM agents that drive robots. Interactive, retro and fully runnable.">
+  <link rel="icon" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/theme.css">
+</head>
+<body data-root=".">
+  <header id="topbar"></header>
+
+  <!-- ============================== HERO ============================== -->
+  <section class="hero">
+    <div class="stars"></div>
+    <canvas class="floor" aria-hidden="true"></canvas>
+    <div class="inner">
+      <div class="emblem"><div class="sun"></div><div class="hero-robot" data-sprite="pink"></div></div>
+      <div class="eyebrow" style="margin-top:22px">// A HANDS-ON TUTORIAL · 1986 EDITION</div>
+      <h1>Build <span class="grad-text">robot agents</span><br>with LangChain &amp; LangGraph</h1>
+      <p class="lead">From one LLM call to a squad of robots taking orders in plain English. Every concept comes with a
+        simulation you can play and the real Python code you can copy and run.</p>
+      <div class="cta">
+        <a class="btn primary big" href="chapters/welcome.html">▶ Press start</a>
+        <a class="btn big" href="#demo">Try the simulator</a>
+      </div>
+      <div class="badge-row">
+        <span class="chip pink">LangChain v1</span>
+        <span class="chip cyan">LangGraph</span>
+        <span class="chip yellow">Gemini · DeepSeek · local</span>
+        <span class="chip">~4h 40min</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== HOW IT WORKS ============================== -->
+  <section class="section">
+    <div class="inner">
+      <div class="section-title">
+        <div class="eyebrow">// HOW THIS WORKS</div>
+        <h2>Understand it. Watch it. Run it.</h2>
+        <p>Everyone codes with AI assistants now, so this course is about concepts and capabilities: what agents can do and which piece solves which problem. The simulations run in your browser with no API key, and the code is real, so your robot moves for real when you run it.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature"><div class="ico">▶</div><h4>Play the simulation</h4><p>Pick a request, press Run and watch the robot think, call tools and read its manuals, message by message.</p></div>
+        <div class="feature"><div class="ico">{ }</div><h4>Copy the real code</h4><p>Every demo maps to a Python script in <code>code/</code>. Same tools, same world, same results, with a real LLM behind it.</p></div>
+        <div class="feature"><div class="ico">◆</div><h4>One robot, growing</h4><p>Each chapter builds on the last: R-80 gets a brain, then hands, a manual, a memory and finally a squad.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== DEMO ============================== -->
+  <section class="section" id="demo" style="padding-top:0">
+    <div class="inner" style="max-width:1000px">
+      <div class="section-title">
+        <div class="eyebrow">// LIVE DEMO (EMULATED)</div>
+        <h2>Meet R-80</h2>
+        <p>A lab robot controlled by an LLM agent. Give it an order.</p>
+      </div>
+      <div class="sim" id="sim-landing" data-scenario="ch2b-tools"></div>
+    </div>
+  </section>
+
+  <!-- ============================== ROADMAP ============================== -->
+  <section class="section" id="roadmap">
+    <div class="inner" style="max-width:900px">
+      <div class="section-title">
+        <div class="eyebrow">// COURSE MAP</div>
+        <h2>Eight stages, one robot squad</h2>
+        <p>Each stage adds one piece to the same robots. By the end, they coordinate a mission on their own.</p>
+      </div>
+      <div class="roadmap" id="roadmap-list"></div>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/scenarios.js"></script>
+  <script src="assets/js/sim.js"></script>
+  <script>
+    // synthwave floor: lines converge to a vanishing point and scroll toward the viewer
+    (() => {
+      const cv = document.querySelector(".hero .floor"), ctx = cv.getContext("2d");
+      const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let t = 0;
+      function frame() {
+        const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+        if (cv.width !== w * dpr || cv.height !== h * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        ctx.lineWidth = 1.2;
+        const vx = w / 2;
+        for (let i = -24; i <= 24; i++) {            // vertical lines
+          ctx.strokeStyle = "rgba(255,42,109,.55)";
+          ctx.beginPath(); ctx.moveTo(vx + i * 14, 0); ctx.lineTo(vx + i * (w / 12), h); ctx.stroke();
+        }
+        for (let k = 1; k < 26; k++) {               // horizontal lines, perspective spaced
+          const d = k - (t % 1), y = h * (1.1 / d) - h * 0.04;
+          if (y < 0 || y > h) continue;
+          ctx.strokeStyle = `rgba(255,42,109,${Math.min(0.85, y / h + 0.15)})`;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+        if (!still) { t += 0.012; requestAnimationFrame(frame); }
+      }
+      frame();
+    })();
+
+    document.getElementById("roadmap-list").innerHTML = CHAPTERS.map((c) => `
+      <a class="stage" href="chapters/${c.slug}.html">
+        <span class="dot">${c.num}</span>
+        <span class="body"><h4>${c.title}</h4><p>${c.sub}</p><div class="builds">+ ${c.builds}</div></span>
+        <span class="time">${c.time}</span>
+      </a>`).join("");
+  </script>
+</body>
+</html>

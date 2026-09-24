@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What is LangChain? · Robot Agents</title>
+  <meta name="description" content="LangChain and LangGraph explained with robots: everything is a modular node.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="01-concepts">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>What is LangChain / LangGraph?</h1>
+  <p class="lead">One idea to remember: everything is a node. The model, the tools, the memory, the human and other agents are pieces you plug together.</p>
+  <div class="meta"><span class="chip pink">Concepts</span><span class="chip ">No code</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>An LLM alone only produces text. An <strong>agent</strong> wraps it in a loop: <em>think → act with a tool → observe the result → think again</em>, until the goal is done. LangChain gives you the pieces. LangGraph wires them together.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>A mental map of every piece in this course</li><li>Knowing which piece solves which problem</li><li>Words to talk to your AI copilot precisely</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>Agent</strong>: LLM + tools + a loop</li><li><strong>Node</strong>: a step that reads and updates state</li><li><strong>Graph</strong>: nodes connected by edges</li></ul></div>
+</div>
+
+<h2 id="everything-is-a-node">Everything is a node</h2>
+<p>Step through the diagram. Each layer adds one building block around R-80. The rest of the course fills these boxes in one by one.</p>
+<div class="diagram" data-diagram="ch1-stack"></div>
+
+<h2 id="langchain-vs-langgraph">LangChain vs LangGraph</h2>
+<div class="grid-2">
+  <div class="card"><h4 style="color:var(--pink)">LangChain</h4><p>High-level building blocks: chat models behind one interface, tools, retrievers, messages, and <code>create_agent()</code>, a ready-made agent loop. Start here.</p></div>
+  <div class="card"><h4 style="color:var(--cyan)">LangGraph</h4><p>The low-level engine underneath: you draw the graph yourself with nodes, edges, shared state, cycles and checkpoints. Use it when one agent loop is not enough.</p></div>
+</div>
+<div class="callout tip"><p><code>create_agent()</code> <strong>is</strong> a LangGraph graph. Everything you learn in chapters 2–4 still applies when you build custom graphs in chapter 5.</p></div>
+
+<h2 id="why-a-framework">Why a framework at all?</h2>
+<div class="grid-3">
+  <div class="card"><h4>Raw APIs</h4><p>Full control, but you rewrite the tool loop, retries, memory and provider quirks for every project. Too low-level.</p></div>
+  <div class="card highlight"><h4>LangChain + LangGraph</h4><p>The middle ground: reusable pieces, any model, and you still own the code and the control flow.</p></div>
+  <div class="card"><h4>n8n / no-code</h4><p>Fast to click together, but hard to version, test, debug or run inside a robot's stack. You lose control.</p></div>
+</div>
+
+<div class="todo">Add the "agent loop" animation: LLM → tool call → observation → LLM.</div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Using the LangChain docs MCP, explain the difference between create_agent() in LangChain and a custom StateGraph in LangGraph, and when I should use each one for a robotics project.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>An <strong>agent</strong> = LLM + a loop that lets it call tools until the job is done.</li><li>Tools, RAG, memory, humans and other agents are all pluggable nodes.</li><li>LangChain gives the pieces. LangGraph lets you wire them into any graph.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

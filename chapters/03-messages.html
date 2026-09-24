@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Talking to the robot · Robot Agents</title>
+  <meta name="description" content="LangChain message types explained with robots: SystemMessage, HumanMessage, AIMessage, ToolMessage, and how agents talk to each other.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="03-messages">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>Talking to the robot</h1>
+  <p class="lead">Everything an agent knows is a list of messages. Four types, each with one job, and one twist when agents talk to each other.</p>
+  <div class="meta"><span class="chip pink">state['messages']</span><span class="chip cyan">Multi-agent twist</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>An LLM has no memory and no senses. On every turn it receives <strong>the whole list of messages</strong> and continues it. Choosing the right message type tells the model <em>who</em> said each thing.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>A readable, debuggable history of everything it did</li><li>Tool results it can trust and link to its requests</li><li>A clean way to hear other robots</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>SystemMessage</strong>: rules</li><li><strong>HumanMessage</strong>: external input</li><li><strong>AIMessage</strong>: the model's own turn</li><li><strong>ToolMessage</strong>: a tool's result</li></ul></div>
+</div>
+
+<h2 id="four-types">Four message types</h2>
+<div class="grid-2 msg-cards">
+  <div class="card" style="--c:var(--msg-system)"><h4>SystemMessage</h4><p>The robot's rules and personality. Written by you, the developer. Usually first.</p></div>
+  <div class="card" style="--c:var(--msg-human)"><h4>HumanMessage</h4><p>Input from <em>outside</em> the agent: the operator's goals, questions and approvals… or another agent (see below).</p></div>
+  <div class="card" style="--c:var(--msg-ai)"><h4>AIMessage</h4><p>The model's own turn: plain text, or <code>tool_calls</code> asking to run tools.</p></div>
+  <div class="card" style="--c:var(--msg-tool)"><h4>ToolMessage</h4><p>A tool's result, linked to its request by <code>tool_call_id</code>.</p></div>
+</div>
+
+<h2 id="which-type">Which type should I use?</h2>
+<div class="table-wrap"><table>
+  <tr><th>Communication</th><th>Type</th><th>Why</th></tr>
+  <tr><td>"You are R-80, never leave the lab"</td><td><span class="tag system">System</span></td><td>Permanent rules the operator shouldn't override</td></tr>
+  <tr><td>"Bring the red cube"</td><td><span class="tag human">Human</span></td><td>A request from outside the agent</td></tr>
+  <tr><td>Sensor reading returned by <code>scan_surroundings</code></td><td><span class="tag tool">Tool</span></td><td>An observation produced by code the agent called</td></tr>
+  <tr><td>A report from another robot</td><td><span class="tag human">Human</span></td><td>External input, with a header saying who sent it (see below)</td></tr>
+  <tr><td>A summary of old history</td><td><span class="tag human">Human</span> / <span class="tag system">System</span></td><td>Context injected by the framework (chapter 4)</td></tr>
+</table></div>
+
+<h2 id="inspect">Inspect a real history</h2>
+<p>Run the request and watch the raw objects pile up in <code>state["messages"]</code>. Notice how each <code>tool_call_id</code> links a result back to its request.</p>
+<div class="sim" id="sim-messages" data-scenario="ch3-messages"></div>
+<div class="code" data-file="ch3_messages.py" data-download="code/ch3_messages.py" data-run="sim-messages"><pre><code class="lang-python">    messages = [
+        SystemMessage("You are R-80, a lab robot. Be brief."),
+        HumanMessage("What's your battery, and what is on the workbench?"),
+    ]
+    result = agent.invoke({"messages": messages})
+
+    print("=== Raw message history ===")
+    for msg in result["messages"]:
+        line = f"{type(msg).__name__:&lt;14} | {msg.text[:70]!r}"
+        if getattr(msg, "tool_calls", None):
+            line += f" | tool_calls={[(c['name'], c['args']) for c in msg.tool_calls]}"
+        if getattr(msg, "tool_call_id", None):
+            line += f" | answers={msg.tool_call_id[:8]}..."
+        print(line)</code></pre></div>
+
+<h2 id="agents-talking">The twist: when agents talk to agents</h2>
+<p>Don't read <code>HumanMessage</code> literally as "a human wrote this". It means <strong>"input from an external entity"</strong>. When SCOUT and GRIP talk, each robot must see the conversation from <em>its own</em> point of view:</p>
+<ul>
+  <li>What <strong>I</strong> said → <code>AIMessage</code> (my own turns).</li>
+  <li>What <strong>any other agent</strong> said → <code>HumanMessage</code> (input from outside).</li>
+</ul>
+<p>Same conversation, three views. Switch tabs:</p>
+<div class="tabs"><div class="tab-panel" data-tab="Shared log"><div class="msg-list"><div class="msg route"><div class="kind">shared log · scout</div><div class="body">Sensor kit found at shelf_b. Zone B: SLOW mode.</div></div><div class="msg route"><div class="kind">shared log · grip</div><div class="body">Copy. Heading to shelf_b in SLOW mode.</div></div><div class="msg route"><div class="kind">shared log · scout</div><div class="body">Path is clear.</div></div></div></div><div class="tab-panel" data-tab="Seen by SCOUT"><div class="msg-list"><div class="msg ai"><div class="kind">AIMessage · my own words</div><div class="body">Sensor kit found at shelf_b. Zone B: SLOW mode.</div></div><div class="msg human"><div class="kind">HumanMessage · from GRIP</div><div class="body">[FROM: grip] Copy. Heading to shelf_b in SLOW mode.</div></div><div class="msg ai"><div class="kind">AIMessage · my own words</div><div class="body">Path is clear.</div></div></div></div><div class="tab-panel" data-tab="Seen by GRIP"><div class="msg-list"><div class="msg human"><div class="kind">HumanMessage · from SCOUT</div><div class="body">[FROM: scout] Sensor kit found at shelf_b. Zone B: SLOW mode.</div></div><div class="msg ai"><div class="kind">AIMessage · my own words</div><div class="body">Copy. Heading to shelf_b in SLOW mode.</div></div><div class="msg human"><div class="kind">HumanMessage · from SCOUT</div><div class="body">[FROM: scout] Path is clear.</div></div></div></div></div>
+<div class="callout warn"><p><strong>Add a header saying who is talking.</strong> A <code>HumanMessage</code> doesn't say who sent it. Prefix it, as in <code>[FROM: scout] …</code>, so the robot knows whether the order came from the operator, the supervisor or a teammate. If every other agent's message were an <code>AIMessage</code>, the model would think it said those things itself.</p></div>
+<div class="code" data-file="ch3_messages.py" data-download="code/ch3_messages.py"><pre><code class="lang-python">def as_seen_by(agent_name: str, log: list[tuple[str, str]]) -&gt; list:
+    """Turn a shared multi-agent log into ONE agent's point of view.
+
+    Its own lines are AIMessage; everyone else's are HumanMessage with a
+    [FROM: ...] header, because for this agent they are external input.
+    """
+    return [
+        AIMessage(text) if sender == agent_name else HumanMessage(f"[FROM: {sender}] {text}")
+        for sender, text in log
+    ]</code></pre></div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">In my LangGraph multi-agent system, convert the shared message log so that each agent sees its own messages as AIMessage and every other agent's messages as HumanMessage prefixed with a [FROM: &lt;name&gt;] header. Use code/ch3_messages.py as reference.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li>The whole conversation, tool calls included, is one list of messages.</li><li>An AIMessage with <code>tool_calls</code> is always followed by matching ToolMessages.</li><li>HumanMessage = <em>external</em> input. Other agents' messages are HumanMessage from each agent's point of view, with a <code>[FROM: …]</code> header.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

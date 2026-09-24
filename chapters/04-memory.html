@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Robot memory · Robot Agents</title>
+  <meta name="description" content="Agent memory in LangGraph: checkpointers, threads, token management and summarization.">
+  <link rel="icon" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/theme.css">
+</head>
+<body data-root=".." data-chapter="04-memory">
+  <header id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+      <div class="content-inner">
+
+<header class="chapter-head">
+  <h1>Robot memory</h1>
+  <p class="lead">By default every call starts from zero. A checkpointer gives R-80 a memory per conversation, and middleware keeps that memory from overflowing.</p>
+  <div class="meta"><span class="chip pink">Checkpointer</span><span class="chip cyan">thread_id</span><span class="chip yellow">Summarization</span></div>
+</header>
+
+<div class="briefing">
+  <div><h4>// THE CONCEPT</h4><p>LLMs are stateless: they only know what's in the messages you send them. <strong>Memory</strong> means saving those messages between calls, and keeping them small enough to fit in the model's <strong>context window</strong>.</p></div>
+  <div><h4>// YOUR ROBOT GAINS</h4><ul><li>Remembers instructions across turns</li><li>Separate conversations per mission</li><li>Long missions without hitting the context limit</li></ul></div>
+  <div><h4>// KEY TERMS</h4><ul><li><strong>Checkpointer</strong>: saves the state after each step</li><li><strong>thread_id</strong>: which conversation to continue</li><li><strong>Context window</strong>: max tokens a model can read at once</li></ul></div>
+</div>
+
+<h2 id="threads">Threads and checkpointers</h2>
+<p>A <strong>checkpointer</strong> saves the graph state after every step. A <strong>thread_id</strong> picks which saved conversation to continue. Same thread: R-80 remembers. New thread: blank slate. Like save slots in a video game.</p>
+<div class="sim" id="sim-memory" data-scenario="ch4-memory"></div>
+<div class="code" data-file="ch4_memory.py" data-download="code/ch4_memory.py" data-run="sim-memory" data-hl="13-20"><pre><code class="lang-python">def ask(agent, text: str, thread: str) -&gt; None:
+    config = {"configurable": {"thread_id": thread}}
+    result = agent.invoke({"messages": [{"role": "user", "content": text}]}, config)
+    print(f"[{thread}] OPERATOR: {text}\n[{thread}] R-80: {result['messages'][-1].text}\n")
+
+
+if __name__ == "__main__":
+    WORLD.add_robot("r80")
+    agent = create_agent(
+        model=get_model(),
+        tools=make_robot_tools("r80"),
+        system_prompt="You are R-80, a lab robot. Be brief.",
+        checkpointer=InMemorySaver(),  # swap for SqliteSaver/PostgresSaver to persist on disk
+        middleware=[
+            SummarizationMiddleware(
+                model=get_model(),
+                trigger=("tokens", 1500),  # summarize when history gets this big...
+                keep=("messages", 6),      # ...but keep the last 6 messages verbatim
+            )
+        ],
+    )
+
+    ask(agent, "Remember: the red cube is fragile, handle it gently.", thread="mission-1")
+    ask(agent, "What do you know about the red cube?", thread="mission-1")  # remembers
+    ask(agent, "What do you know about the red cube?", thread="mission-2")  # new thread: forgets</code></pre></div>
+<div class="callout tip"><p><code>InMemorySaver</code> is lost when the script stops. Swap it for <code>SqliteSaver</code> or <code>PostgresSaver</code> to persist missions on disk. The API stays the same.</p></div>
+
+<h2 id="overflow">When the context overflows</h2>
+<p>Every tool call adds messages. On a long patrol the history grows until it no longer fits in the context window, or just gets slow and expensive. Pick <strong>Long patrol</strong> in the simulator above and watch the token gauge.</p>
+<div class="grid-3">
+  <div class="card"><h4>Trim</h4><p>Drop the oldest messages. Cheap, but the robot forgets early instructions.</p></div>
+  <div class="card highlight"><h4>Summarize</h4><p><code>SummarizationMiddleware</code> replaces old messages with a short summary and keeps the last N intact.</p></div>
+  <div class="card"><h4>Store outside</h4><p>Put long-term facts (maps, preferences) in a Store and retrieve them when needed.</p></div>
+</div>
+
+<div class="todo">Add a live token counter comparing "no memory management" vs "summarization" over 20 turns.</div>
+
+<div class="prompt-box">
+  <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
+  <div class="prompt-text">Replace InMemorySaver with a SQLite checkpointer in code/ch4_memory.py so R-80's missions persist between runs, and show me how to list the saved threads.</div>
+  <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
+</div>
+
+<div class="takeaways"><h4>// SAVE POINT</h4><ul><li><code>checkpointer</code> + <code>thread_id</code> = conversation memory.</li><li>Context is finite: plan for trimming or summarizing from day one.</li><li>Memory is middleware, a pluggable node like everything else.</li></ul></div>
+
+      </div>
+    </main>
+  </div>
+  <footer id="footer"></footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/scenarios.js"></script>
+  <script src="../assets/js/sim.js"></script>
+  <script src="../assets/js/diagram.js"></script>
+  <script src="../assets/js/widgets.js"></script>
+</body>
+</html>

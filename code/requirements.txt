@@ -1,0 +1,16 @@
+# Core
+langchain>=1.1
+langgraph>=1.0
+python-dotenv
+
+# Model providers: keep the ones you use
+langchain-google-genai   # Gemini (default, also embeddings)
+langchain-deepseek       # DeepSeek
+langchain-ollama         # Local models via Ollama
+# langchain-openai       # GPT (also embeddings)
+# langchain-anthropic    # Claude
+# langchain-mistralai    # Mistral
+
+# RAG (chapter 2c)
+langchain-text-splitters
+pypdf                    # only needed if you drop PDFs into data/manuals
