@@ -10,16 +10,16 @@ const SITE = {
 };
 
 const CHAPTERS = [
-  { slug: "welcome",          num: "▶",  title: "Welcome to the lab",      sub: "What you'll learn · power-ups",    builds: "meet the robots and power up your AI assistant", time: "5 min" },
-  { slug: "00-setup",         num: "00", title: "Boot sequence",           sub: "Setup, API keys, first run",       builds: "robot_world.py — the lab, no AI yet", time: "10 min" },
-  { slug: "01-concepts",      num: "01", title: "What is LangChain?",      sub: "Everything is a node",             builds: "the mental model: everything is a node", time: "25 min" },
-  { slug: "02-first-agent",   num: "02", title: "Your first robot agent",  sub: "Models · Tools · RAG",             builds: "R-80 gets a brain, hands and a manual", time: "55 min" },
-  { slug: "03-messages",      num: "03", title: "Talking to the robot",    sub: "System, Human, AI, Tool",          builds: "read R-80's conversation, message by message", time: "15 min" },
-  { slug: "04-memory",        num: "04", title: "Robot memory",            sub: "Threads, tokens, summaries",       builds: "R-80 remembers across turns", time: "25 min" },
-  { slug: "05-multi-agent",   num: "05", title: "The robot squad",         sub: "Multi-agent graphs",               builds: "SCOUT + GRIP coordinated by a supervisor", time: "45 min" },
-  { slug: "06-robot-control", num: "06", title: "Mission control",         sub: "Natural language → robot actions", builds: "natural-language missions, end to end", time: "40 min" },
-  { slug: "07-ros2-field",    num: "07", title: "ROS 2 × LangChain",       sub: "★ Field-tested in our lab",        builds: "the agent as high-level controller of real robots", time: "15 min", gold: true },
-  { slug: "08-discussion",    num: "08", title: "Debrief",                 sub: "Open questions",                   builds: "where this fits in your own robots", time: "30 min" },
+  { slug: "welcome",          num: "▶",  title: "Welcome to the lab",      sub: "What you'll learn · power-ups",    builds: "meet the robots and power up your AI assistant" },
+  { slug: "00-setup",         num: "00", title: "Boot sequence",           sub: "Setup, API keys, first run",       builds: "robot_world.py — the lab, no AI yet" },
+  { slug: "01-concepts",      num: "01", title: "What is LangChain?",      sub: "Everything is a node",             builds: "the mental model: everything is a node" },
+  { slug: "02-first-agent",   num: "02", title: "Your first robot agent",  sub: "Models · Tools · RAG",             builds: "R-80 gets a brain, hands and a manual" },
+  { slug: "03-messages",      num: "03", title: "Talking to the robot",    sub: "System, Human, AI, Tool",          builds: "read R-80's conversation, message by message" },
+  { slug: "04-memory",        num: "04", title: "Robot memory",            sub: "Threads, tokens, summaries",       builds: "R-80 remembers across turns" },
+  { slug: "05-multi-agent",   num: "05", title: "The robot squad",         sub: "Multi-agent graphs",               builds: "SCOUT + GRIP coordinated by a supervisor" },
+  { slug: "06-robot-control", num: "06", title: "Mission control",         sub: "Natural language → robot actions", builds: "natural-language missions, end to end" },
+  { slug: "07-ros2-field",    num: "07", title: "ROS 2 × LangChain",       sub: "★ Field-tested in our lab",        builds: "the agent as high-level controller of real robots", gold: true },
+  { slug: "08-discussion",    num: "08", title: "Debrief",                 sub: "Open questions",                   builds: "where this fits in your own robots" },
 ];
 
 const GROUP = {
@@ -219,7 +219,7 @@ function buildChapterHeader(current) {
   if (idx < 0 || !head) return;
   const c = CHAPTERS[idx];
   const label = /\d/.test(c.num) ? `Chapter ${c.num}` : "Start here";
-  head.insertAdjacentHTML("afterbegin", `<div class="eyebrow">${label} · ${c.time}</div>`);
+  head.insertAdjacentHTML("afterbegin", `<div class="eyebrow">${label}</div>`);
 }
 
 function buildPager(current) {
