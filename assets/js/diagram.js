@@ -38,7 +38,8 @@
           <button class="btn next">Next ▶</button>
           ${c.trace ? `<button class="btn run trace">▶ Trace a run</button>` : ""}
         </div>
-        <svg viewBox="${c.viewBox.join(" ")}"></svg>`;
+        <svg viewBox="${c.viewBox.join(" ")}"></svg>
+        ${c.state ? `<div class="d-state"><div class="d-state-head"><span>${c.state.name} · live</span><span class="d-state-by"></span></div><div class="d-state-rows"></div></div>` : ""}`;
       const svg = (this.svg = this.el.querySelector("svg"));
       const byId = Object.fromEntries(c.nodes.map((n) => [n.id, n]));
       this.byId = byId;
@@ -109,6 +110,7 @@
         this.nodeEls[n.id] = g;
       });
 
+      if (c.state) this.resetState();
       this.el.querySelector(".prev").addEventListener("click", () => this.show(this.stage - 1));
       this.el.querySelector(".next").addEventListener("click", () => this.show(this.stage + 1));
       this.el.querySelector(".trace")?.addEventListener("click", () => this.trace());
@@ -129,6 +131,34 @@
       this.el.querySelector(".next").disabled = this.stage === max;
     }
 
+    /* ---------- live state panel (optional: cfg.state) ----------
+       cfg.state = { name, fields: [{ key, type, merge }], initial: {...} }
+       trace steps may carry a 4th element: { by, set: {key: value}, append: {key: item} } */
+    resetState() {
+      this.stateValues = JSON.parse(JSON.stringify(this.cfg.state.initial));
+      this.renderState();
+      this.el.querySelector(".d-state-by").textContent = "";
+    }
+
+    renderState(changed = []) {
+      const fmt = (v) => Array.isArray(v)
+        ? (v.length ? v.map((m) => `<span class="d-chip">${m}</span>`).join("") : `<span class="d-empty">[ ]</span>`)
+        : `<code>${JSON.stringify(v)}</code>`;
+      this.el.querySelector(".d-state-rows").innerHTML = this.cfg.state.fields.map((f) => `
+        <div class="d-row${changed.includes(f.key) ? " changed" : ""}">
+          <span class="d-key">${f.key}</span><span class="d-type">${f.type}</span>
+          <span class="d-val">${fmt(this.stateValues[f.key])}</span><span class="d-merge">${f.merge}</span>
+        </div>`).join("");
+    }
+
+    applyWrite(w) {
+      const changed = [];
+      for (const [k, v] of Object.entries(w.set || {})) { this.stateValues[k] = v; changed.push(k); }
+      for (const [k, v] of Object.entries(w.append || {})) { this.stateValues[k] = [...this.stateValues[k], v]; changed.push(k); }
+      this.renderState(changed);
+      this.el.querySelector(".d-state-by").innerHTML = `written by <b>${w.by}</b>: ${changed.join(", ")}`;
+    }
+
     pulse(id) {
       const g = this.nodeEls[id];
       if (!g) return;
@@ -139,10 +169,16 @@
       this.show(this.cfg.stages.length - 1);
       const btn = this.el.querySelector(".trace");
       btn.disabled = true;
-      for (const [from, to, note] of this.cfg.trace) {
+      if (this.cfg.state) this.resetState();
+      for (const [from, to, note, write] of this.cfg.trace) {
         const edge = this.edgeEls[`${from}>${to}`];
         if (!edge) continue;
         if (note) this.el.querySelector(".caption").textContent = note;
+        if (write && this.cfg.state) {       // the node that just ran writes to the state…
+          this.pulse(from);
+          this.applyWrite(write);
+          await new Promise((r) => setTimeout(r, 1400));
+        }                                      // …then the edge carries control to the next node
         const path = edge.querySelector("path"), L = path.getTotalLength();
         const dot = document.createElementNS(NS, "circle");
         dot.setAttribute("r", 7); dot.setAttribute("fill", "#fff");

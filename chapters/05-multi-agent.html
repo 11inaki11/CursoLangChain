@@ -33,6 +33,32 @@
 
 <h2 id="graphs">Graphs are state machines</h2>
 <p>If you have programmed a robot's state machine, you already know LangGraph. <strong>Nodes</strong> are states that do work, <strong>edges</strong> are transitions, and the <strong>shared state</strong> decides which transition fires. The difference: here an LLM can choose the transition.</p>
+<div class="grid-3">
+  <div class="card"><h4 style="color:var(--orange)">State</h4><p>The graph's shared memory: a typed dictionary that every node can read. It travels through the whole run.</p></div>
+  <div class="card"><h4 style="color:var(--purple)">Nodes</h4><p>Plain Python functions. They receive the whole state and return <em>only</em> the keys they want to change.</p></div>
+  <div class="card"><h4 style="color:var(--cyan)">Edges</h4><p>Decide what runs next. Fixed edges always go the same way; conditional edges read the state to choose. Edges never change the state.</p></div>
+</div>
+
+<h3>The state: the graph's shared memory</h3>
+<p>Our squad's state is <code>SquadState</code>. Each key is a <strong>state variable</strong>: <code>messages</code>, <code>next</code>, <code>task</code> and <code>rounds</code>. They aren't Python variables inside one function; they live in the graph and outlive every node.</p>
+<div class="table-wrap"><table>
+  <tr><th>Variable</th><th>Type</th><th>Written by</th><th>Read by</th><th>On write</th></tr>
+  <tr><td><code>messages</code></td><td>list of messages</td><td><code>invoke()</code> (the goal), SCOUT and GRIP (their reports)</td><td>the supervisor, to decide</td><td>appended</td></tr>
+  <tr><td><code>next</code></td><td>str</td><td>the supervisor (its LLM chooses)</td><td>the conditional edge</td><td>overwritten</td></tr>
+  <tr><td><code>task</code></td><td>str</td><td>the supervisor (its LLM writes it)</td><td>the worker that runs next</td><td>overwritten</td></tr>
+  <tr><td><code>rounds</code></td><td>int</td><td>the supervisor (+1 per turn, plain code)</td><td>the supervisor, to stop after 8 rounds</td><td>overwritten</td></tr>
+</table></div>
+
+<h3>How a state variable changes</h3>
+<ol class="steps">
+  <li><strong>A node reads the state</strong>LangGraph calls the node function with the current state, e.g. <code>state["messages"]</code>.</li>
+  <li><strong>It returns only what changes</strong>The supervisor returns <code>{"next": "grip", "task": "…", "rounds": 2}</code>. It doesn't return <code>messages</code>, so that key stays as it was.</li>
+  <li><strong>LangGraph merges the update</strong>By default a key is overwritten. <code>messages</code> has a <em>reducer</em> (<code>add_messages</code>, built into <code>MessagesState</code>) that appends instead, so no report is ever lost.</li>
+  <li><strong>An edge reads the new state</strong>The conditional edge <code>lambda state: state["next"]</code> maps <code>"grip"</code> to the GRIP node, and the cycle continues.</li>
+</ol>
+<div class="callout robot"><p><strong>Who decides what?</strong> <em>You</em> decide the shape: nodes and edges are fixed in code. <em>The LLM</em> decides the values of <code>next</code> and <code>task</code> at runtime, inside the supervisor node. <em>Plain code</em> decides <code>rounds</code> and the safety stop. So the LLM can only choose among the transitions you drew.</p></div>
+
+<p>Step through the layers, then press <strong>▶ Trace a run</strong>. The table under the graph shows the state after every node: the row that changes lights up, with who wrote it.</p>
 <div class="diagram" data-diagram="ch5-graph"></div>
 
 <h2 id="run-it">Run the squad</h2>
