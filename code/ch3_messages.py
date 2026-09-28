@@ -13,6 +13,7 @@ from langchain.messages import AIMessage, HumanMessage, SystemMessage
 
 from ch2b_tools import make_robot_tools
 from config import get_model
+from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 
@@ -31,7 +32,8 @@ def as_seen_by(agent_name: str, log: list[tuple[str, str]]) -> list:
 if __name__ == "__main__":
     # --- 1. A single agent: the four message types ---
     WORLD.add_robot("r80")
-    agent = create_agent(model=get_model(), tools=make_robot_tools("r80"))
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(model=get_model(), tools=make_robot_tools("r80")))
 
     messages = [
         SystemMessage("You are R-80, a lab robot. Be brief."),
@@ -58,3 +60,4 @@ if __name__ == "__main__":
         print(f"\n=== As seen by {robot.upper()} ===")
         for msg in as_seen_by(robot, log):
             print(f"{type(msg).__name__:<13}| {msg.text}")
+    wait_to_close()

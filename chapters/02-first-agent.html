@@ -126,22 +126,21 @@ agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</c
     "You speak like a retro computer terminal. Answer in at most 2 sentences."
 )
 
-BRAINS = [
-    DEFAULT_MODEL,             # Gemini (cloud)
-    "deepseek:deepseek-chat",  # DeepSeek (cloud)
-    LOCAL_MODEL,               # Ollama (local / SSH tunnel)
-]
+
+def boot(brain: str) -&gt; None:
+    agent = create_agent(model=get_model(brain), system_prompt=SYSTEM_PROMPT)
+    result = agent.invoke({"messages": [{"role": "user", "content": "Boot up and introduce yourself."}]})
+    print(f"\n[{brain}]\n{result['messages'][-1].text}")
+
 
 if __name__ == "__main__":
-    for brain in BRAINS:
+    brains = available_models() if "--compare" in sys.argv else [DEFAULT_MODEL]
+    for brain in brains:
         try:
-            agent = create_agent(model=get_model(brain), system_prompt=SYSTEM_PROMPT)
-            result = agent.invoke(
-                {"messages": [{"role": "user", "content": "Boot up and introduce yourself."}]}
-            )
-            print(f"\n[{brain}]\n{result['messages'][-1].text}")
-        except Exception as exc:  # missing key, Ollama not running...
-            print(f"\n[{brain}] skipped -&gt; {exc}")</code></pre></div>
+            boot(brain)
+        except Exception as exc:  # wrong key, package not installed, Ollama model not pulled...
+            print(f"\n[{brain}] failed -&gt; {exc}")</code></pre></div>
+<p>The script runs <strong>your</strong> model: the one in <code>ROBOT_MODEL</code>, or the provider whose key you set. Have keys for several providers? <code>python3 ch2a_models.py --compare</code> runs the same agent on each of them, plus Ollama if it's running.</p>
 
 <h2 id="tools">2b · Tools: give it hands</h2>
 <p>A tool is just a Python function. The <code>@tool</code> decorator reads its <strong>name, type hints and docstring</strong> and shows them to the LLM, which then decides <em>when</em> to call it and <em>with which arguments</em>. The function itself runs in your code, and its return value goes back to the LLM as an observation.</p>
@@ -187,11 +186,12 @@ if __name__ == "__main__":
 <div class="sim" id="sim-tools" data-scenario="ch2b-tools"></div>
 <div class="code" data-file="ch2b_tools.py" data-download="code/ch2b_tools.py" data-run="sim-tools"><pre><code class="lang-python">if __name__ == "__main__":
     WORLD.add_robot("r80")
-    agent = create_agent(
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt=SYSTEM_PROMPT,
-    )
+    ))
     result = agent.invoke(
         {"messages": [{"role": "user", "content": "Bring the red cube to the workbench."}]}
     )

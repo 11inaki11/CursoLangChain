@@ -18,6 +18,9 @@ through tools.
 
 from __future__ import annotations
 
+import functools
+import threading
+import time
 from dataclasses import dataclass, field
 
 GRID_W, GRID_H = 8, 6
@@ -46,10 +49,28 @@ class Robot:
         return LOCATIONS[self.position]
 
 
+def action(pause: float):
+    """Log every action for the live viewer and, when it is open, take some
+    "physical" time so movements can be watched (see lab_viewer.py)."""
+    def decorate(method):
+        @functools.wraps(method)
+        def wrapper(self, robot_name, *args):
+            result = method(self, robot_name, *args)
+            self.emit("world", result, robot=robot_name)
+            if self.realtime:
+                time.sleep(pause)
+            return result
+        return wrapper
+    return decorate
+
+
 class World:
     """Shared state of the lab: robots + where every item is."""
 
     def __init__(self) -> None:
+        self.realtime = False            # set by lab_viewer.start_viewer()
+        self.events: list[dict] = []     # what the live viewer displays
+        self._lock = threading.Lock()
         self.robots: dict[str, Robot] = {}
         self.items: dict[str, str] = {
             "red_cube": "shelf_a",
@@ -63,12 +84,29 @@ class World:
         self.robots[name] = robot
         return robot
 
+    def emit(self, kind: str, text: str, robot: str | None = None) -> None:
+        with self._lock:
+            self.events.append({"id": len(self.events), "kind": kind, "text": text, "robot": robot})
+
+    def snapshot(self) -> dict:
+        """Everything the viewer needs, as plain JSON-able data."""
+        with self._lock:
+            return {
+                "grid": [GRID_W, GRID_H],
+                "locations": LOCATIONS,
+                "robots": [{"name": r.name, "position": r.position, "battery": r.battery, "holding": r.holding}
+                           for r in self.robots.values()],
+                "items": dict(self.items),
+                "events": list(self.events),
+            }
+
     def get(self, name: str) -> Robot:
         if name not in self.robots:
             raise ValueError(f"Unknown robot '{name}'. Known: {list(self.robots)}")
         return self.robots[name]
 
     # ---------- actions (what tools will call) ----------
+    @action(pause=1.0)
     def move_to(self, robot_name: str, location: str) -> str:
         robot = self.get(robot_name)
         if location not in LOCATIONS:
@@ -83,6 +121,7 @@ class World:
         robot.log.append(f"moved to {location}")
         return f"{robot.name} arrived at {location} after {steps} steps. Battery: {robot.battery}%."
 
+    @action(pause=0.6)
     def scan(self, robot_name: str) -> str:
         robot = self.get(robot_name)
         here = [item for item, loc in self.items.items() if loc == robot.position]
@@ -93,10 +132,12 @@ class World:
             f"Holding: {robot.holding or 'nothing'}."
         )
 
+    @action(pause=0.3)
     def battery(self, robot_name: str) -> str:
         robot = self.get(robot_name)
         return f"{robot.name} battery: {robot.battery}%."
 
+    @action(pause=0.5)
     def pick(self, robot_name: str, item: str) -> str:
         robot = self.get(robot_name)
         if robot.holding:
@@ -108,6 +149,7 @@ class World:
         robot.log.append(f"picked {item}")
         return f"{robot.name} picked up {item}."
 
+    @action(pause=0.5)
     def place(self, robot_name: str) -> str:
         robot = self.get(robot_name)
         if not robot.holding:
@@ -117,6 +159,7 @@ class World:
         robot.log.append(f"placed {item} at {robot.position}")
         return f"{robot.name} placed {item} at {robot.position}."
 
+    @action(pause=0.6)
     def charge(self, robot_name: str) -> str:
         robot = self.get(robot_name)
         if robot.position != "dock":
@@ -142,10 +185,14 @@ WORLD = World()
 
 
 if __name__ == "__main__":
+    from lab_viewer import start_viewer, wait_to_close
+
     WORLD.add_robot("r80")
+    start_viewer()
     print(WORLD.move_to("r80", "shelf_a"))
     print(WORLD.pick("r80", "red_cube"))
     print(WORLD.move_to("r80", "workbench"))
     print(WORLD.place("r80"))
     print(WORLD.scan("r80"))
     print(WORLD.render())
+    wait_to_close()

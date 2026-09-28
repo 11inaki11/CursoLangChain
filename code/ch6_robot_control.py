@@ -11,6 +11,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from ch2b_tools import make_robot_tools
 from ch2c_rag import build_manual_tool
 from config import get_model
+from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 SYSTEM_PROMPT = (
@@ -20,12 +21,13 @@ SYSTEM_PROMPT = (
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    agent = create_agent(
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80") + [build_manual_tool()],
         system_prompt=SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
-    )
+    ))
     config = {"configurable": {"thread_id": "mission-control"}}
     print(WORLD.render())
 

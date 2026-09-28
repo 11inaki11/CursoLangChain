@@ -12,6 +12,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from ch2b_tools import make_robot_tools
 from config import get_model
+from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 
@@ -23,7 +24,8 @@ def ask(agent, text: str, thread: str) -> None:
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    agent = create_agent(
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt="You are R-80, a lab robot. Be brief.",
@@ -35,8 +37,9 @@ if __name__ == "__main__":
                 keep=("messages", 6),      # ...but keep the last 6 messages verbatim
             )
         ],
-    )
+    ))
 
     ask(agent, "Remember: the red cube is fragile, handle it gently.", thread="mission-1")
     ask(agent, "What do you know about the red cube?", thread="mission-1")  # remembers
     ask(agent, "What do you know about the red cube?", thread="mission-2")  # new thread: forgets
+    wait_to_close()

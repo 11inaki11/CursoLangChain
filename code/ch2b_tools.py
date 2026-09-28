@@ -10,6 +10,7 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 
 from config import get_model
+from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 
@@ -56,14 +57,16 @@ SYSTEM_PROMPT = (
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    agent = create_agent(
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt=SYSTEM_PROMPT,
-    )
+    ))
     result = agent.invoke(
         {"messages": [{"role": "user", "content": "Bring the red cube to the workbench."}]}
     )
     for message in result["messages"]:
         message.pretty_print()
     print("\n" + WORLD.render())
+    wait_to_close()

@@ -42,7 +42,8 @@
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    agent = create_agent(
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt="You are R-80, a lab robot. Be brief.",
@@ -54,7 +55,7 @@ if __name__ == "__main__":
                 keep=("messages", 6),      # ...but keep the last 6 messages verbatim
             )
         ],
-    )
+    ))
 
     ask(agent, "Remember: the red cube is fragile, handle it gently.", thread="mission-1")
     ask(agent, "What do you know about the red cube?", thread="mission-1")  # remembers
@@ -69,7 +70,6 @@ if __name__ == "__main__":
   <div class="card"><h4>Store outside</h4><p>Put long-term facts (maps, preferences) in a Store and retrieve them when needed.</p></div>
 </div>
 
-<div class="todo">Add a live token counter comparing "no memory management" vs "summarization" over 20 turns.</div>
 
 <div class="prompt-box">
   <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>

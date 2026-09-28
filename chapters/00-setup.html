@@ -44,7 +44,7 @@ pip install -r requirements.txt</code></pre></div>
 </div>
 
 <h2 id="api-keys">Choose your provider</h2>
-<p>Any of these works for the whole course. Pick one, get the key, and put the two lines in <code>code/.env</code> (copy <code>.env.example</code> first). Your choice is remembered, and chapter 2 will show the same provider.</p>
+<p>Any of these works for the whole course. Pick one, get the key, copy <code>.env.example</code> to <code>code/.env</code> and fill in <strong>only that key</strong>. Leave the others empty: every script uses the provider whose key it finds (or the one you set in <code>ROBOT_MODEL</code>). Your choice is remembered, and chapter 2 will show the same provider.</p>
 <div class="tabs" data-group="provider"><div class="tab-panel" data-tab="Gemini"><dl class="kv">
   <dt>Get a key</dt><dd><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio ↗</a></dd>
   <dt>Package</dt><dd><code>pip install langchain-google-genai</code></dd>
@@ -63,14 +63,14 @@ OPENAI_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data
   <dt>Get a key</dt><dd><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console ↗</a></dd>
   <dt>Package</dt><dd><code>pip install langchain-anthropic</code></dd>
   <dt>Model string</dt><dd><code>anthropic:claude-sonnet-5</code></dd>
-  <dt>Notes</dt><dd>Pay as you go. No embeddings API: use Gemini, OpenAI or Ollama embeddings for RAG.</dd>
+  <dt>Notes</dt><dd>Pay as you go. No embeddings API: RAG (chapter 2c) falls back to a local keyword search unless you set EMBEDDINGS_MODEL.</dd>
 </dl>
 <div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=anthropic:claude-sonnet-5
 ANTHROPIC_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="DeepSeek"><dl class="kv">
   <dt>Get a key</dt><dd><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">DeepSeek Platform ↗</a></dd>
   <dt>Package</dt><dd><code>pip install langchain-deepseek</code></dd>
   <dt>Model string</dt><dd><code>deepseek:deepseek-chat</code></dd>
-  <dt>Notes</dt><dd>Pay as you go, with a very low price per token. No embeddings API.</dd>
+  <dt>Notes</dt><dd>Pay as you go, with a very low price per token. No embeddings API: RAG (chapter 2c) falls back to a local keyword search unless you set EMBEDDINGS_MODEL.</dd>
 </dl>
 <div class="code" data-file=".env"><pre><code class="lang-bash">ROBOT_MODEL=deepseek:deepseek-chat
 DEEPSEEK_API_KEY=your-key-here</code></pre></div></div><div class="tab-panel" data-tab="Mistral"><dl class="kv">
@@ -96,7 +96,7 @@ ssh -N -L 11434:localhost:11434 user@gpu-server</code></pre></div></div></div>
 <p><strong>Run it now.</strong> It's the quickest check that your install works, and it needs no API key.</p>
 <ol class="steps">
   <li><strong>Open a terminal in the <code>code/</code> folder</strong>With the virtual environment active (the <code>source .venv/bin/activate</code> step above).</li>
-  <li><strong>Run the lab</strong>R-80 drives to shelf A, picks up the red cube, carries it to the workbench and prints a map.</li>
+  <li><strong>Run the lab</strong>A browser tab opens with the live lab, and R-80 drives to shelf A, picks up the red cube and carries it to the workbench. The terminal prints the same steps and a text map.</li>
 </ol>
 <div class="code" data-file="terminal"><pre><code class="lang-bash">python3 robot_world.py      # Windows: py robot_world.py</code></pre></div>
 <p>You should see this:</p>
@@ -112,6 +112,9 @@ D . . . . . . A
 . . . . . . . .
 X . . . . . . B</code></pre></div>
 <p>In the map, <code>D</code> is the dock, <code>A</code> and <code>B</code> are shelves A and B, <code>X</code> is the door, and the lowercase <code>r</code> is R-80, now standing on the workbench. If you see this, your Python setup is ready.</p>
+<h3>The live viewer</h3>
+<p>Every script with robots opens this viewer at <code>http://localhost:8765</code>: the same lab as the website's simulator, but driven by your <strong>real</strong> agent. You see its messages, each tool call and every robot move as they happen. When the script finishes, press <kbd>Enter</kbd> in the terminal to close it.</p>
+<div class="callout tip"><p>Running over SSH or without a browser? Add <code>--no-viewer</code> (or set <code>LAB_VIEWER=0</code>) and everything prints to the terminal only.</p></div>
 <p>Curious what's inside? The file starts with the lab layout:</p>
 <div class="code" data-file="robot_world.py" data-download="code/robot_world.py"><pre><code class="lang-python">"""
 robot_world.py — a tiny, dependency-free robot lab.

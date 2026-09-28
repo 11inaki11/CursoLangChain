@@ -48,3 +48,10 @@ Mark unfinished parts with `<div class="todo">…</div>`.
 **Keep the web and the code in sync.** The simulator's world rules and tool output strings match `code/robot_world.py`. If you change one, change the other.
 
 The copilot power-ups on the welcome page (docs MCP servers, Skills and their prompts) are made by LangChain: see [docs.langchain.com/use-these-docs](https://docs.langchain.com/use-these-docs) and [langchain-ai/langchain-skills](https://github.com/langchain-ai/langchain-skills).
+
+## Pending (team)
+
+Ideas not yet built. They are not shown on the site.
+
+- Chapter 1: an "agent loop" animation (LLM → tool call → observation → LLM).
+- Chapter 4: a live token counter comparing no memory management vs. summarization over 20 turns.

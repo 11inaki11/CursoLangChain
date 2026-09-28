@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from ch2b_tools import make_robot_tools
 from ch2c_rag import build_manual_tool
 from config import get_model
+from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 MAX_ROUNDS = 8
@@ -103,8 +104,10 @@ squad = builder.compile()
 
 if __name__ == "__main__":
     print(squad.get_graph().draw_mermaid())  # paste into mermaid.live to see the graph
+    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
     goal = "Find the sensor kit and bring it to the workbench, following the lab safety rules."
-    final = squad.invoke({"messages": [HumanMessage(goal)]})
+    final = watch(squad).invoke({"messages": [HumanMessage(goal)]})
     for msg in final["messages"]:
         print(f"{(msg.name or msg.type).upper():>8}: {msg.text}")
     print("\n" + WORLD.render())
+    wait_to_close()
