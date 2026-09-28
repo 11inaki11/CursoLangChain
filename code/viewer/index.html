@@ -45,7 +45,12 @@
   .empty { margin: auto; color: var(--dim); text-align: center; font-size: .88rem; }
   .msg { border-radius: 10px; padding: 8px 11px; background: var(--surface); border-left: 3px solid var(--c); font-size: .86rem; animation: in .35s ease-out both; }
   @keyframes in { from { opacity: 0; transform: translateY(6px); } }
-  .msg .kind { font: .7rem var(--mono); color: var(--c); margin-bottom: 2px; }
+  .msg .kind { font: .7rem var(--mono); color: var(--c); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .msg.by-agent { background: linear-gradient(90deg, color-mix(in srgb, var(--agent) 16%, var(--surface)), var(--surface) 75%); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px 1px 3px; border-radius: 999px; border: 1px solid var(--a); color: var(--a); font: 600 .66rem var(--mono); white-space: nowrap; }
+  .chip svg { width: 14px; height: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--line-soft); }
+  .legend:empty { display: none; }
   .msg.human { --c: var(--cyan); } .msg.ai { --c: var(--pink); } .msg.call { --c: var(--pink); } .msg.world { --c: var(--yellow); }
   .msg.system { --c: var(--purple); } .msg.gate_ok { --c: var(--green); } .msg.gate_reject { --c: var(--pink); background: rgba(255,42,109,.08); }
   .msg.retrieval { --c: var(--green); }
@@ -65,6 +70,7 @@
     <div class="world"><svg id="map" viewBox="-6 -6 460 348"></svg><div class="hud" id="hud"></div></div>
     <div class="console">
       <div class="console-head">AGENT CONSOLE · REAL MESSAGES AND TOOL CALLS</div>
+      <div class="legend" id="legend"></div>
       <div class="log" id="log"><div class="empty">Waiting for the agent…</div></div>
     </div>
   </div>
@@ -81,6 +87,22 @@
     { h: "#f9c80e", b: "#ff8a3d", w: "#fff", e: "#0b0620", a: "#05d9e8", y: "#ff2a6d", m: "#0b0620", t: "#3a2a8a" },
     { h: "#3dfc9b", b: "#1f8a70", w: "#fff", e: "#0b0620", a: "#b967ff", y: "#f9c80e", m: "#0b0620", t: "#3a2a8a" },
   ];
+  // Same colour per robot as on the website: R-80 pink, SCOUT cyan, GRIP yellow; others in order.
+  const NAMED = { r80: 0, scout: 1, grip: 2 };
+  const paletteFor = (name, i) => PALETTES[(NAMED[name] ?? i) % PALETTES.length];
+  const SUPERVISOR = { h: "#b967ff", b: "#6a2cc9", w: "#fff", e: "#0b0620", a: "#3dfc9b", y: "#ff2a6d", m: "#0b0620", t: "#3a2a8a" };
+  // Who sent a message: robots use their sprite colour; the supervisor is purple.
+  let agents = {};
+  function buildAgents(state) {
+    agents = {};
+    state.robots.forEach((r, i) => { const p = paletteFor(r.name, i); agents[r.name] = { color: p.h, palette: p }; });
+    agents.supervisor = { color: SUPERVISOR.h, palette: SUPERVISOR };
+    const multi = state.robots.length > 1;
+    document.getElementById("legend").innerHTML = multi ? Object.keys(agents).map((n) => chip(n)).join("") : "";
+    return multi;
+  }
+  const chip = (name) => { const a = agents[name]; return a ? `<span class="chip" style="--a:${a.color}"><svg viewBox="0 0 12 12" shape-rendering="crispEdges">${sprite(a.palette)}</svg>${esc(name)}</span>` : ""; };
+  let multiAgent = false;
   const LABELS = { system: "SystemMessage", human: "HumanMessage · operator", ai: "AIMessage", call: "AIMessage · tool_call",
                    world: "ToolMessage · lab", retrieval: "ToolMessage · search_manuals", note: "// note", gate_ok: "Safety gate ✓ published to ROS 2", gate_reject: "Safety gate ✗ rejected" };
   const map = document.getElementById("map"), log = document.getElementById("log"), hud = document.getElementById("hud");
@@ -125,7 +147,7 @@
 
   function update(state) {
     if (state.session.id !== session) reset(state.session);
-    if (!drawn) drawStatic(state);
+    if (!drawn) { drawStatic(state); multiAgent = buildAgents(state); }
     const perLoc = {};
     for (const [k, where] of Object.entries(state.items)) {
       const g = itemEls[k]; if (!g) continue;
@@ -141,7 +163,7 @@
       if (!g) {
         g = document.createElementNS(NS, "g");
         g.setAttribute("class", "robot");
-        g.innerHTML = `<g class="bob"><svg x="-17" y="-22" width="34" height="34" viewBox="0 0 12 12" shape-rendering="crispEdges">${sprite(PALETTES[i % PALETTES.length])}</svg></g><g class="carry" transform="translate(0,-28)"></g>`;
+        g.innerHTML = `<g class="bob"><svg x="-17" y="-22" width="34" height="34" viewBox="0 0 12 12" shape-rendering="crispEdges">${sprite(paletteFor(r.name, i))}</svg></g><g class="carry" transform="translate(0,-28)"></g>`;
         map.querySelector("#robots").appendChild(g); robotEls[r.name] = g;
       }
       const [cx, cy] = center(state, r.position);
@@ -154,9 +176,10 @@
     const fresh = state.events.slice(seen);
     if (fresh.length) log.querySelector(".empty")?.remove();
     for (const e of fresh) {
-      const who = e.robot && e.kind !== "world" ? ` · ${esc(e.robot)}` : e.kind === "world" && e.robot ? ` · ${esc(e.robot)}` : "";
+      const a = multiAgent && e.robot && agents[e.robot];
+      const who = !a && e.robot ? ` · ${esc(e.robot)}` : "";
       const hits = (e.hits || []).map((h) => `<div class="hit"><b>${esc(h.source)} · score ${Number(h.score).toFixed(2)}</b>${esc(h.text)}</div>`).join("");
-      log.insertAdjacentHTML("beforeend", `<div class="msg ${e.kind}"><div class="kind">${LABELS[e.kind] || e.kind}${who}</div><div class="text">${esc(e.text)}</div>${hits}</div>`);
+      log.insertAdjacentHTML("beforeend", `<div class="msg ${e.kind}${a ? " by-agent" : ""}"${a ? ` style="--agent:${a.color}"` : ""}><div class="kind">${a ? chip(e.robot) : ""}${LABELS[e.kind] || e.kind}${who}</div><div class="text">${esc(e.text)}</div>${hits}</div>`);
     }
     if (fresh.length) log.scrollTop = log.scrollHeight;
     seen = state.events.length;

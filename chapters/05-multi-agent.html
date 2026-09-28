@@ -78,11 +78,13 @@
     tools=[t for t in make_robot_tools("scout") if t.name in {"move_to", "scan_surroundings", "check_battery"}]
     + [build_manual_tool()],
     system_prompt="You are SCOUT, a fast explorer robot. You cannot pick things up. Report findings briefly.",
+    name="scout",  # tags its messages, so every message says which agent sent it
 )
 grip_agent = create_agent(
     model=get_model(),
     tools=make_robot_tools("grip"),
     system_prompt="You are GRIP, a strong robot with a gripper. Execute the task and report briefly.",
+    name="grip",
 )
 
 

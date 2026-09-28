@@ -102,6 +102,7 @@
           <div class="sim-world"><svg viewBox="-6 -6 ${GW * CELL + 12} ${GH * CELL + 12}"></svg><div class="sim-hud"></div></div>
           <div class="sim-console">
             <div class="console-head"><span>AGENT CONSOLE · state["messages"]</span><span class="count">0 msgs</span></div>
+            ${c.robots.length > 1 ? `<div class="agent-legend"></div>` : ""}
             <div class="console-log"></div>
           </div>
         </div>`;
@@ -135,6 +136,9 @@
       this.log.innerHTML = `<div class="console-empty"><span class="pixel">READY_</span>Pick a request and press ▶ Run.<br>Everything here is emulated — the real code is right above.</div>`;
       this.drawWorld();
       this.drawHud();
+      const legend = this.el.querySelector(".agent-legend");
+      if (legend) legend.innerHTML = ["operator", "supervisor", ...Object.keys(this.world.robots)]
+        .map((w) => this.agentChip(this.agent(w))).join("");
       this.updateCount();
     }
 
@@ -277,11 +281,26 @@
     }
 
     /* ---------- console ---------- */
-    msg(kind, label, body, extra = "") {
+    /* Multi-agent runs: who sent each message. Colour = the robot's sprite colour. */
+    agent(who) {
+      if (this.cfg.robots.length < 2 || !who) return null;
+      if (who === "operator") return { name: "operator", color: "#ece8ff", palette: null };
+      if (who === "supervisor") return { name: "supervisor", color: RobotSprite.PALETTES.purple.h, palette: "purple" };
+      const r = this.world.robots[who];
+      return r ? { name: r.name, color: RobotSprite.PALETTES[r.palette].h, palette: r.palette } : null;
+    }
+    agentChip(a) {
+      const icon = a.palette ? `<svg viewBox="0 0 12 12" shape-rendering="crispEdges">${RobotSprite.rects(a.palette)}</svg>` : "👤";
+      return `<span class="agent-chip" style="--a:${a.color}">${icon}${a.name}</span>`;
+    }
+
+    msg(kind, label, body, extra = "", who = null) {
       this.log.querySelector(".console-empty")?.remove();
       const d = document.createElement("div");
       d.className = `msg ${kind}`;
-      d.innerHTML = `<div class="kind">${label}</div><div class="body"></div>${extra}`;
+      const a = this.agent(who);
+      if (a) { d.classList.add("by-agent"); d.style.setProperty("--agent", a.color); }
+      d.innerHTML = `<div class="kind">${a ? this.agentChip(a) : ""}${label}</div><div class="body"></div>${extra}`;
       d.querySelector(".body").textContent = body || "";
       this.log.appendChild(d);
       this.log.scrollTop = this.log.scrollHeight;
@@ -353,7 +372,7 @@
           await this.sleep(500, tk); break;
 
         case "human":
-          this.msg("human", "HumanMessage · operator", s.text, this.raw(`HumanMessage(content=${JSON.stringify(s.text)})`));
+          this.msg("human", "HumanMessage · operator", s.text, this.raw(`HumanMessage(content=${JSON.stringify(s.text)})`), "operator");
           await this.sleep(600, tk); break;
 
         case "thread":
@@ -365,7 +384,7 @@
         case "route": {
           this.setActive(s.to === "FINISH" ? null : s.to);
           const target = s.to === "FINISH" ? "END" : (this.world.robots[s.to]?.name || s.to);
-          this.msg("route", `supervisor → ${target}`, s.task || "Mission complete.");
+          this.msg("route", `routes to ${target}`, s.task || "Mission complete.", "", "supervisor");
           document.dispatchEvent(new CustomEvent("sim:route", { detail: { to: s.to } }));
           await this.sleep(1000, tk); break;
         }
@@ -374,7 +393,7 @@
           await this.maybeSummarize(run, tk);
           this.setActive(robot);
           const label = s.name ? `AIMessage · name="${s.name}"` : `AIMessage · ${rName}`;
-          const d = this.msg("ai", label, "");
+          const d = this.msg("ai", label, "", "", robot);
           d.querySelector(".body").innerHTML = `<span class="thinking"><i></i><i></i><i></i></span>`;
           await this.sleep(s.think || 900, tk);
           const text = this.fill(s.text);
@@ -391,7 +410,7 @@
           const args = s.args || {};
           const id = `call_${String(++this.callN).padStart(2, "0")}`;
           const argStr = Object.entries(args).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", ");
-          const d = this.msg("ai", `AIMessage · tool_call${this.cfg.verbose ? ` · id=${id}` : ""}`, "");
+          const d = this.msg("ai", `AIMessage · tool_call${this.cfg.verbose ? ` · id=${id}` : ""}`, "", "", robot);
           d.querySelector(".body").innerHTML = `<span class="thinking"><i></i><i></i><i></i></span>`;
           await this.sleep(s.think || 700, tk);
           d.querySelector(".body").innerHTML = `<span class="call">${escapeHtml(s.name)}(${escapeHtml(argStr)})</span>`;
@@ -409,7 +428,7 @@
             result = (s.hits || []).map((h) => `[${h.src}] ${h.text}`).join("\n\n");
             extra = (s.hits || []).map((h) => `<div class="hit"><b>${h.src} · score ${h.score.toFixed(2)}</b><br>${escapeHtml(h.text)}</div>`).join("");
             this.bubble(robot, "", false);
-            this.msg("retrieval", `ToolMessage · search_manuals${this.cfg.verbose ? ` · tool_call_id=${id}` : ""}`, `${(s.hits || []).length} chunks retrieved for "${args.query}"`, extra);
+            this.msg("retrieval", `ToolMessage · search_manuals${this.cfg.verbose ? ` · tool_call_id=${id}` : ""}`, `${(s.hits || []).length} chunks retrieved for "${args.query}"`, extra, robot);
           } else {
             const from = this.world.robots[robot].position;
             result = s.result || (this.world[s.name] ? this.world[s.name](robot, args) : `ok`);
@@ -419,7 +438,7 @@
             this.updateHud();
             this.bubble(robot, "", false);
             this.msg("tool", `ToolMessage · ${s.name}${this.cfg.verbose ? ` · tool_call_id=${id}` : ""}`, result,
-              this.raw(`ToolMessage(content=${JSON.stringify(result)}, tool_call_id="${id}")`));
+              this.raw(`ToolMessage(content=${JSON.stringify(result)}, tool_call_id="${id}")`), robot);
           }
           await this.sleep(500, tk);
           break;

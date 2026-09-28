@@ -117,17 +117,27 @@ class ViewerCallback(BaseCallbackHandler):
 
     def __init__(self, world: World = WORLD) -> None:
         self.world = world
+        self._speaker: dict = {}  # model run id -> agent that is speaking
 
-    def on_llm_end(self, response, **kwargs) -> None:
+    def on_chat_model_start(self, serialized, messages, *, run_id, metadata=None, **kwargs) -> None:
+        # create_agent(name="scout") tags its model calls with lc_agent_name; a plain graph
+        # node (like the supervisor) is identified by its node name.
+        metadata = metadata or {}
+        speaker = metadata.get("lc_agent_name") or metadata.get("langgraph_node")
+        self._speaker[run_id] = None if speaker in (None, "model") else speaker
+
+    def on_llm_end(self, response, *, run_id, **kwargs) -> None:
+        speaker = self._speaker.pop(run_id, None)
         for generation in response.generations[0]:
             message = getattr(generation, "message", None)
             if message is None:
                 continue
+            who = speaker or getattr(message, "name", None)
             for call in getattr(message, "tool_calls", None) or []:
                 args = ", ".join(f"{k}={v!r}" for k, v in call["args"].items())
-                self.world.emit("call", f"{call['name']}({args})", robot=getattr(message, "name", None))
+                self.world.emit("call", f"{call['name']}({args})", robot=who)
             if message.text.strip():
-                self.world.emit("ai", message.text.strip(), robot=getattr(message, "name", None))
+                self.world.emit("ai", message.text.strip(), robot=who)
 
 
 class watch:
