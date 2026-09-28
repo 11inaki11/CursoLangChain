@@ -16,7 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from ch2b_tools import make_robot_tools
 from config import DEFAULT_MODEL, get_embeddings, get_model
-from lab_viewer import start_viewer, wait_to_close, watch
+from lab_viewer import show_retrieval, start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
 MANUALS_DIR = Path(__file__).parent / "data" / "manuals"
@@ -40,13 +40,13 @@ def build_manual_tool(k: int = 3):
     splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50)
     chunks = splitter.split_documents(load_manuals())
     store = InMemoryVectorStore.from_documents(chunks, get_embeddings())  # text -> vectors
-    retriever = store.as_retriever(search_kwargs={"k": k})               # top-k nearest chunks
 
     @tool
     def search_manuals(query: str) -> str:
         """Search the R-80 service manual and the lab safety rules (specs, limits, zones, error codes)."""
-        hits = retriever.invoke(query)
-        return "\n\n".join(f"[{d.metadata['source']}] {d.page_content}" for d in hits)
+        hits = store.similarity_search_with_score(query, k=k)  # top-k nearest chunks + similarity
+        show_retrieval(query, hits)                             # live viewer: the retrieved chunks
+        return "\n\n".join(f"[{d.metadata['source']}] {d.page_content}" for d, _ in hits)
 
     return search_manuals
 

@@ -84,9 +84,9 @@ class World:
         self.robots[name] = robot
         return robot
 
-    def emit(self, kind: str, text: str, robot: str | None = None) -> None:
+    def emit(self, kind: str, text: str, robot: str | None = None, **extra) -> None:
         with self._lock:
-            self.events.append({"id": len(self.events), "kind": kind, "text": text, "robot": robot})
+            self.events.append({"id": len(self.events), "kind": kind, "text": text, "robot": robot, **extra})
 
     def snapshot(self) -> dict:
         """Everything the viewer needs, as plain JSON-able data."""

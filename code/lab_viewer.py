@@ -102,6 +102,16 @@ def wait_to_close() -> None:
             pass
 
 
+def show_retrieval(query: str, hits: list, world: World = WORLD) -> None:
+    """Show a RAG search in the viewer: the query and each retrieved chunk with its score."""
+    world.emit("retrieval", f'{len(hits)} chunks retrieved for "{query}"', hits=[
+        {"source": doc.metadata.get("source", "?"), "score": round(float(score), 2), "text": doc.page_content}
+        for doc, score in hits
+    ])
+    if world.realtime:
+        time.sleep(0.8)
+
+
 class ViewerCallback(BaseCallbackHandler):
     """Sends the agent's messages and tool calls to the viewer as they happen."""
 

@@ -48,6 +48,9 @@
   .msg .kind { font: .7rem var(--mono); color: var(--c); margin-bottom: 2px; }
   .msg.human { --c: var(--cyan); } .msg.ai { --c: var(--pink); } .msg.call { --c: var(--pink); } .msg.world { --c: var(--yellow); }
   .msg.system { --c: var(--purple); } .msg.gate_ok { --c: var(--green); } .msg.gate_reject { --c: var(--pink); background: rgba(255,42,109,.08); }
+  .msg.retrieval { --c: var(--green); }
+  .hit { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: rgba(61,252,155,.06); border: 1px solid rgba(61,252,155,.2); font-size: .8rem; color: var(--muted); white-space: pre-wrap; }
+  .hit b { color: var(--green); font: 500 .74rem var(--mono); display: block; margin-bottom: 2px; }
   .msg.note { --c: var(--dim); background: transparent; border: 1px dashed var(--line); color: var(--muted); font-style: italic; }
   .msg.call .text { font-family: var(--mono); color: var(--yellow); font-size: .82rem; }
   .text { white-space: pre-wrap; word-break: break-word; }
@@ -79,7 +82,7 @@
     { h: "#3dfc9b", b: "#1f8a70", w: "#fff", e: "#0b0620", a: "#b967ff", y: "#f9c80e", m: "#0b0620", t: "#3a2a8a" },
   ];
   const LABELS = { system: "SystemMessage", human: "HumanMessage · operator", ai: "AIMessage", call: "AIMessage · tool_call",
-                   world: "ToolMessage · lab", note: "// note", gate_ok: "Safety gate ✓ published to ROS 2", gate_reject: "Safety gate ✗ rejected" };
+                   world: "ToolMessage · lab", retrieval: "ToolMessage · search_manuals", note: "// note", gate_ok: "Safety gate ✓ published to ROS 2", gate_reject: "Safety gate ✗ rejected" };
   const map = document.getElementById("map"), log = document.getElementById("log"), hud = document.getElementById("hud");
   let robotEls = {}, itemEls = {};
   let drawn = false, seen = 0, session = null;
@@ -152,7 +155,8 @@
     if (fresh.length) log.querySelector(".empty")?.remove();
     for (const e of fresh) {
       const who = e.robot && e.kind !== "world" ? ` · ${esc(e.robot)}` : e.kind === "world" && e.robot ? ` · ${esc(e.robot)}` : "";
-      log.insertAdjacentHTML("beforeend", `<div class="msg ${e.kind}"><div class="kind">${LABELS[e.kind] || e.kind}${who}</div><div class="text">${esc(e.text)}</div></div>`);
+      const hits = (e.hits || []).map((h) => `<div class="hit"><b>${esc(h.source)} · score ${Number(h.score).toFixed(2)}</b>${esc(h.text)}</div>`).join("");
+      log.insertAdjacentHTML("beforeend", `<div class="msg ${e.kind}"><div class="kind">${LABELS[e.kind] || e.kind}${who}</div><div class="text">${esc(e.text)}</div>${hits}</div>`);
     }
     if (fresh.length) log.scrollTop = log.scrollHeight;
     seen = state.events.length;
