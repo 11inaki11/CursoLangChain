@@ -93,6 +93,26 @@ ssh -N -L 11434:localhost:11434 user@gpu-server</code></pre></div></div></div>
 
 <h2 id="the-lab">Meet the lab (no AI yet)</h2>
 <p><code>robot_world.py</code> is the "hardware": a pure-Python lab with five stations, three items and robots that burn 2% battery per grid step. Every chapter controls this same world.</p>
+<p><strong>Run it now.</strong> It's the quickest check that your install works, and it needs no API key.</p>
+<ol class="steps">
+  <li><strong>Open a terminal in the <code>code/</code> folder</strong>With the virtual environment active (the <code>source .venv/bin/activate</code> step above).</li>
+  <li><strong>Run the lab</strong>R-80 drives to shelf A, picks up the red cube, carries it to the workbench and prints a map.</li>
+</ol>
+<div class="code" data-file="terminal"><pre><code class="lang-bash">python3 robot_world.py      # Windows: py robot_world.py</code></pre></div>
+<p>You should see this:</p>
+<div class="code" data-file="expected output"><pre><code class="lang-text">r80 arrived at shelf_a after 7 steps. Battery: 86%.
+r80 picked up red_cube.
+r80 arrived at workbench after 7 steps. Battery: 72%.
+r80 placed red_cube at workbench.
+r80 at workbench (3, 3). Items here: ['red_cube', 'wrench']. Other robots here: none. Holding: nothing.
+D . . . . . . A
+. . . . . . . .
+. . . . . . . .
+. . . r . . . .
+. . . . . . . .
+X . . . . . . B</code></pre></div>
+<p>In the map, <code>D</code> is the dock, <code>A</code> and <code>B</code> are shelves A and B, <code>X</code> is the door, and the lowercase <code>r</code> is R-80, now standing on the workbench. If you see this, your Python setup is ready.</p>
+<p>Curious what's inside? The file starts with the lab layout:</p>
 <div class="code" data-file="robot_world.py" data-download="code/robot_world.py"><pre><code class="lang-python">"""
 robot_world.py — a tiny, dependency-free robot lab.
 
@@ -110,11 +130,6 @@ through tools.
     5  DOOR . . . . . . SHELF_B
        0    1 2 3 4 5 6 7   x
 """</code></pre></div>
-<div class="code" data-file="output"><pre><code class="lang-bash">$ python3 robot_world.py
-r80 arrived at shelf_a after 7 steps. Battery: 86%.
-r80 picked up red_cube.
-r80 arrived at workbench after 7 steps. Battery: 72%.
-r80 placed red_cube at workbench.</code></pre></div>
 <div class="callout robot"><p><strong>No LLM yet.</strong> These are plain function calls that <em>you</em> ordered. In chapter 2 we hand the same functions to an LLM and let <em>it</em> decide which to call.</p></div>
 
 <div class="prompt-box">

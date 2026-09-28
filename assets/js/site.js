@@ -267,7 +267,7 @@ function enhanceCodeBlocks() {
     if (!codeEl) return;
     const lang = codeEl.className.replace("lang-", "") || "python";
     const raw = codeEl.textContent.replace(/^\n/, "").replace(/\s+$/, "");
-    codeEl.innerHTML = highlight(raw, lang);
+    codeEl.innerHTML = lang === "text" ? escapeHtml(raw) : highlight(raw, lang);  // "text": program output, no colours
 
     const file = block.dataset.file || lang;
     const head = document.createElement("div");
