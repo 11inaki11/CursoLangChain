@@ -44,6 +44,9 @@
   <tr><th>Communication</th><th>Type</th><th>Why</th></tr>
   <tr><td>"You are R-80, never leave the lab"</td><td><span class="tag system">System</span></td><td>Permanent rules the operator shouldn't override</td></tr>
   <tr><td>"Bring the red cube"</td><td><span class="tag human">Human</span></td><td>A request from outside the agent</td></tr>
+  <tr><td>"Done! The red cube is on the workbench."</td><td><span class="tag ai">AI</span></td><td>The model's own answer</td></tr>
+  <tr><td>R-80 deciding to call <code>move_to(location="shelf_a")</code></td><td><span class="tag ai">AI</span></td><td>The model's turn, carrying <code>tool_calls</code>. The tool runs afterwards and its result comes back as a Tool message</td></tr>
+  <tr><td>An example answer you write to show the style you want (few-shot)</td><td><span class="tag ai">AI</span></td><td>You wrote it, but it plays the model's role, so the model imitates it</td></tr>
   <tr><td>Sensor reading returned by <code>scan_surroundings</code></td><td><span class="tag tool">Tool</span></td><td>An observation produced by code the agent called</td></tr>
   <tr><td>A report from another robot</td><td><span class="tag human">Human</span></td><td>External input, with a header saying who sent it (see below)</td></tr>
   <tr><td>A summary of old history</td><td><span class="tag human">Human</span> / <span class="tag system">System</span></td><td>Context injected by the framework (chapter 4)</td></tr>
