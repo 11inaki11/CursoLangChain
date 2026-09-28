@@ -322,6 +322,23 @@ function enhanceCodeBlocks() {
   });
 }
 
+/* ----------------------------- FULLSCREEN ------------------------------
+   Native fullscreen where available; otherwise (e.g. iPhone Safari) a
+   fixed overlay covering the window. Used by simulators and diagrams. */
+function isFullscreen(el) { return document.fullscreenElement === el || el.classList.contains("is-fs"); }
+function toggleFullscreen(el) {
+  if (isFullscreen(el)) {
+    if (document.fullscreenElement) document.exitFullscreen();
+    el.classList.remove("is-fs");
+    return;
+  }
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => el.classList.add("is-fs"));
+  else el.classList.add("is-fs");
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll(".is-fs").forEach((el) => el.classList.remove("is-fs"));
+});
+
 /* -------------------------------- TABS ---------------------------------
    <div class="tabs" data-group="provider">
      <div class="tab-panel" data-tab="Gemini">…</div> …

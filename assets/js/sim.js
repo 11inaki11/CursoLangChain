@@ -92,9 +92,12 @@
           <span class="title">${c.title}</span>
           <span class="brain-badge" title="Model driving the agent">🧠 <span class="brain"></span></span>
           <span class="spacer"></span>
+          <span class="stepcount"></span>
           <button class="btn speed" title="Playback speed">1×</button>
           <button class="btn reset">↺ Reset</button>
-          <button class="btn primary play">▶ Run</button>
+          <button class="btn step" title="Run one step at a time (→ key in fullscreen)">⏭ Step</button>
+          <button class="btn primary play" title="Run everything (Space in fullscreen)">▶ Run</button>
+          <button class="btn fs" title="Fullscreen">⛶</button>
         </div>
         ${c.runs.length > 1 ? `<div class="sim-prompts"><span class="label">${c.pickLabel || "PICK A REQUEST"}</span>
           ${c.runs.map((r, i) => `<button class="prompt-chip" data-i="${i}">${r.label}</button>`).join("")}</div>` : ""}
@@ -109,14 +112,21 @@
       this.$ = (s) => this.el.querySelector(s);
       this.svg = this.$("svg");
       this.log = this.$(".console-log");
-      this.$(".play").addEventListener("click", () => this.play(this.active));
+      this.$(".play").addEventListener("click", () => this.clickRun());
+      this.$(".step").addEventListener("click", () => this.clickStep());
       this.$(".reset").addEventListener("click", () => this.reset());
+      this.$(".fs").addEventListener("click", () => toggleFullscreen(this.el));
+      document.addEventListener("keydown", (e) => {
+        if (!isFullscreen(this.el)) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); this.clickStep(); }
+        else if (e.key === " ") { e.preventDefault(); this.clickRun(); }
+      });
       this.$(".speed").addEventListener("click", (e) => {
         this.speed = this.speed === 1 ? 2 : this.speed === 2 ? 4 : 1;
         e.target.textContent = `${this.speed}×`;
       });
       this.el.querySelectorAll(".prompt-chip").forEach((b) =>
-        b.addEventListener("click", () => this.play(Number(b.dataset.i))));
+        b.addEventListener("click", () => this.play(Number(b.dataset.i), this.lastMode)));
     }
 
     select(i) {
@@ -127,13 +137,16 @@
 
     reset(i = this.active) {
       this.token++;
+      this.running = false; this.mode = "auto"; this.credit = 0;
+      this.release();               // wake a paused step so it sees the new token and stops
       this.select(i);
       const run = this.cfg.runs[i];
       this.world = new World(this.cfg.robots, run.init || {});
       this.tokens = 0; this.summarized = false; this.callN = 0;
       this.$(".led").classList.remove("on");
-      this.$(".play").disabled = false;
-      this.log.innerHTML = `<div class="console-empty"><span class="pixel">READY_</span>Pick a request and press ▶ Run.<br>Everything here is emulated — the real code is right above.</div>`;
+      this.$(".stepcount").textContent = "";
+      this.updateButtons();
+      this.log.innerHTML = `<div class="console-empty"><span class="pixel">READY_</span>Pick a request and press ▶ Run, or ⏭ Step to go one step at a time.<br>Everything here is emulated — the real code is right above.</div>`;
       this.drawWorld();
       this.drawHud();
       const legend = this.el.querySelector(".agent-legend");
@@ -345,18 +358,52 @@
     }
 
     /* ---------- playback ---------- */
-    async play(i = this.active) {
+    /* ---------- playback: "auto" runs everything, "step" waits for a click before each step ---------- */
+    clickRun() {
+      this.lastMode = "auto";
+      if (this.running && this.mode === "step") { this.mode = "auto"; this.release(); this.updateButtons(); }
+      else if (!this.running) this.play(this.active, "auto");
+    }
+
+    clickStep() {
+      this.lastMode = "step";
+      if (!this.running) { this.play(this.active, "step"); return; }
+      this.mode = "step"; this.credit++; this.release(); this.updateButtons();
+    }
+
+    release() { const w = this.waiter; this.waiter = null; if (w) w(); }
+
+    async gate(tk) {
+      while (this.mode === "step" && this.credit === 0) {
+        await new Promise((res) => (this.waiter = res));
+        if (tk !== this.token) throw CANCEL;
+      }
+      if (this.mode === "step") this.credit--;
+    }
+
+    updateButtons(finished = false) {
+      const play = this.$(".play");
+      play.disabled = this.running && this.mode === "auto";
+      play.textContent = this.running ? (this.mode === "step" ? "▶ Continue" : "▶ Running…") : finished ? "▶ Replay" : "▶ Run";
+    }
+
+    async play(i = this.active, mode = "auto") {
       this.reset(i);
       const tk = this.token, run = this.cfg.runs[i];
+      this.running = true; this.mode = mode; this.credit = mode === "step" ? 1 : 0;
       this.$(".led").classList.add("on");
-      this.$(".play").disabled = true;
+      this.updateButtons();
       try {
-        for (const step of run.steps) await this.exec(step, run, tk);
+        for (const [n, step] of run.steps.entries()) {
+          await this.gate(tk);
+          this.$(".stepcount").textContent = `step ${n + 1}/${run.steps.length}`;
+          await this.exec(step, run, tk);
+        }
         this.setActive(null);
       } catch (e) { if (e !== CANCEL) throw e; return; }
+      this.running = false;
       this.$(".led").classList.remove("on");
-      this.$(".play").disabled = false;
-      this.$(".play").textContent = "▶ Replay";
+      this.updateButtons(true);
     }
 
     async exec(s, run, tk) {

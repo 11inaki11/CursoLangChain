@@ -408,6 +408,20 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 .w-scan { animation: scan 1s ease-out forwards; }
 @keyframes scan { from { r: 4; opacity: .9; } to { r: 60; opacity: 0; } }
 
+/* ---------- fullscreen (simulators + diagrams) ---------- */
+.sim-bar .stepcount { font: .72rem var(--font-mono); color: var(--muted); }
+.sim-bar .stepcount:empty { display: none; }
+.is-fs { position: fixed !important; inset: 0; z-index: 900; margin: 0 !important; border-radius: 0 !important; overflow: auto; transform: none !important; width: auto !important; left: 0 !important; }
+.diagram:fullscreen, .diagram.is-fs { background: var(--scr-base); padding: 3vh 4vw; display: flex; flex-direction: column; overflow: auto; }
+.diagram:fullscreen svg, .diagram.is-fs svg { height: 70vh; width: 100%; flex: none; }
+.diagram:fullscreen:has(.d-state) svg, .diagram.is-fs:has(.d-state) svg { height: 52vh; }
+.diagram:fullscreen .diagram-controls .caption, .diagram.is-fs .diagram-controls .caption { font-size: 1.2rem; color: var(--text); }
+.sim:fullscreen, .sim.is-fs { background: var(--scr-base); display: flex; flex-direction: column; overflow: auto; }
+.sim:fullscreen .sim-body, .sim.is-fs .sim-body { flex: 1; min-height: 0; }
+.sim:fullscreen .sim-console, .sim.is-fs .sim-console { max-height: none; }
+.sim:fullscreen .sim-world svg, .sim.is-fs .sim-world svg { max-height: 72vh; }
+.sim:fullscreen .msg, .sim.is-fs .msg { font-size: .98rem; }
+
 /* ---------- concept diagram ---------- */
 .diagram { margin: 1.8em 0; padding: 18px; border-radius: 18px; background: var(--scr-base); border: 1px solid var(--line); }
 .diagram-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }

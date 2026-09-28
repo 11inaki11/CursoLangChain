@@ -37,6 +37,7 @@
           <button class="btn prev">◀</button>
           <button class="btn next">Next ▶</button>
           ${c.trace ? `<button class="btn run trace">▶ Trace a run</button>` : ""}
+          <button class="btn fs" title="Fullscreen (← → to change layer, Esc to exit)">⛶</button>
         </div>
         <svg viewBox="${c.viewBox.join(" ")}"></svg>
         ${c.state ? `<div class="d-state"><div class="d-state-head"><span>${c.state.name} · live</span><span class="d-state-by"></span></div><div class="d-state-rows"></div></div>` : ""}`;
@@ -114,6 +115,13 @@
       this.el.querySelector(".prev").addEventListener("click", () => this.show(this.stage - 1));
       this.el.querySelector(".next").addEventListener("click", () => this.show(this.stage + 1));
       this.el.querySelector(".trace")?.addEventListener("click", () => this.trace());
+      this.el.querySelector(".fs").addEventListener("click", () => toggleFullscreen(this.el));
+      document.addEventListener("keydown", (e) => {
+        if (!isFullscreen(this.el)) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); this.show(this.stage + 1); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); this.show(this.stage - 1); }
+        else if (e.key === " " && this.cfg.trace) { e.preventDefault(); if (!this.el.querySelector(".trace").disabled) this.trace(); }
+      });
     }
 
     show(i) {
