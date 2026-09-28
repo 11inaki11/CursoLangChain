@@ -2,24 +2,53 @@
    ROBOT AGENTS — retro 80s / synthwave theme, modern layout
    ========================================================================== */
 
+/* Two themes:
+   - default ("paper"): light pages, while code / simulators / diagrams / tabs
+     stay dark "screens" with the synthwave neon (the --scr-* tokens).
+   - [data-theme="dark"] ("graphite"): neutral dark pages and screens, softer neon.
+   The toggle lives in the top bar (site.js). */
 :root {
-  --bg: #0b0620;
-  --bg-2: #120a2e;
-  --surface: #170e3a;
-  --surface-2: #1f1450;
-  --line: #2e2270;
-  --line-soft: #231a58;
+  /* page */
+  --bg: #f4efe6;
+  --bg-2: #ede6d8;
+  --surface: #fffaf1;
+  --surface-2: #f2eadb;
+  --line: #d9cdb7;
+  --line-soft: #e6dccb;
+  --text: #221e2c;
+  --muted: #575166;
+  --dim: #857d91;
+  --pink: #d1245c;
+  --cyan: #0b8a9b;
+  --yellow: #a8790a;
+  --purple: #7446c9;
+  --green: #1d9460;
+  --orange: #c9601d;
+  --gold: #a86f00;
+  --gold-2: #c2410c;
+  --gold-hi: #c98a00;
+  --inline-code: #9a3412;
+  --topbar-bg: rgba(244, 239, 230, .88);
+  --scanlines: 0;
 
-  --text: #ece8ff;
-  --muted: #a39cd6;
-  --dim: #6f68a3;
-
-  --pink: #ff2a6d;
-  --cyan: #05d9e8;
-  --yellow: #f9c80e;
-  --purple: #b967ff;
-  --green: #3dfc9b;
-  --orange: #ff8a3d;
+  /* dark "screens" inside the page */
+  --scr-base: #0d0826;
+  --scr-bg: #0b0620;
+  --scr-bg-2: #120a2e;
+  --scr-surface: #170e3a;
+  --scr-surface-2: #1f1450;
+  --scr-line: #2e2270;
+  --scr-line-soft: #231a58;
+  --scr-text: #ece8ff;
+  --scr-muted: #a39cd6;
+  --scr-dim: #6f68a3;
+  --scr-code: #d9d3ff;
+  --scr-pink: #ff2a6d;
+  --scr-cyan: #05d9e8;
+  --scr-yellow: #f9c80e;
+  --scr-purple: #b967ff;
+  --scr-green: #3dfc9b;
+  --scr-orange: #ff8a3d;
 
   /* message-type colours (used everywhere, keep consistent) */
   --msg-system: var(--purple);
@@ -41,6 +70,76 @@
   --glow-cyan: 0 0 12px rgba(5, 217, 232, .5), 0 0 32px rgba(5, 217, 232, .2);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111318;
+  --bg-2: #15181e;
+  --surface: #1a1e25;
+  --surface-2: #20252e;
+  --line: #2b313c;
+  --line-soft: #222731;
+  --text: #e6e4df;
+  --muted: #a3a9b4;
+  --dim: #6b7280;
+  --pink: #ff5c8a;
+  --cyan: #38c6d6;
+  --yellow: #eec05a;
+  --purple: #a58cff;
+  --green: #56d49a;
+  --orange: #f59a5b;
+  --gold: #ffcf40;
+  --gold-2: #ff9f1c;
+  --gold-hi: #fff1b8;
+  --inline-code: #eec05a;
+  --topbar-bg: rgba(17, 19, 24, .85);
+  --scanlines: .4;
+
+  --scr-base: #0e1014;
+  --scr-bg: #111318;
+  --scr-bg-2: #15181e;
+  --scr-surface: #1a1e25;
+  --scr-surface-2: #20252e;
+  --scr-line: #2b313c;
+  --scr-line-soft: #222731;
+  --scr-text: #e6e4df;
+  --scr-muted: #a3a9b4;
+  --scr-dim: #6b7280;
+  --scr-code: #d6d8dd;
+  --scr-pink: #ff5c8a;
+  --scr-cyan: #38c6d6;
+  --scr-yellow: #eec05a;
+  --scr-purple: #a58cff;
+  --scr-green: #56d49a;
+  --scr-orange: #f59a5b;
+}
+
+/* Everything inside a "screen" uses the screen palette. --msg-* must be
+   redeclared here: a var() inside a custom property resolves where it's declared. */
+.code, .sim, .diagram, .widget, .tabs, .hero {
+  --bg: var(--scr-bg);
+  --bg-2: var(--scr-bg-2);
+  --surface: var(--scr-surface);
+  --surface-2: var(--scr-surface-2);
+  --line: var(--scr-line);
+  --line-soft: var(--scr-line-soft);
+  --text: var(--scr-text);
+  --muted: var(--scr-muted);
+  --dim: var(--scr-dim);
+  --pink: var(--scr-pink);
+  --cyan: var(--scr-cyan);
+  --yellow: var(--scr-yellow);
+  --purple: var(--scr-purple);
+  --green: var(--scr-green);
+  --orange: var(--scr-orange);
+  --inline-code: var(--scr-yellow);
+  --msg-system: var(--scr-purple);
+  --msg-human: var(--scr-cyan);
+  --msg-ai: var(--scr-pink);
+  --msg-tool: var(--scr-yellow);
+  --msg-retrieval: var(--scr-green);
+  color: var(--text);
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body {
@@ -57,6 +156,7 @@ body::after {
   position: fixed; inset: 0;
   pointer-events: none; z-index: 999;
   background: repeating-linear-gradient(to bottom, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+  opacity: var(--scanlines);
 }
 a { color: var(--cyan); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -71,7 +171,7 @@ p { margin: 0 0 1.1em; }
 code { font-family: var(--font-mono); font-size: .9em; }
 :not(pre) > code {
   background: var(--surface-2); border: 1px solid var(--line);
-  padding: .1em .4em; border-radius: 5px; color: var(--yellow);
+  padding: .1em .4em; border-radius: 5px; color: var(--inline-code);
 }
 
 .pixel { font-family: var(--font-pixel); letter-spacing: .04em; }
@@ -89,7 +189,7 @@ code { font-family: var(--font-mono); font-size: .9em; }
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; gap: 16px;
   height: 64px; padding: 0 20px;
-  background: rgba(11, 6, 32, .82);
+  background: var(--topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line-soft);
 }
@@ -178,7 +278,7 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 /* ---------- code blocks ---------- */
 .code {
   margin: 1.4em 0; border-radius: var(--radius); overflow: hidden;
-  background: #0d0826; border: 1px solid var(--line);
+  background: var(--scr-base); border: 1px solid var(--line);
   box-shadow: 0 20px 50px -30px rgba(185,103,255,.5);
 }
 .code-head {
@@ -192,7 +292,7 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 .code-head .dots i:nth-child(2) { background: var(--yellow); }
 .code-head .dots i:nth-child(3) { background: var(--cyan); }
 .code-head .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font: 13.5px/1.65 var(--font-mono); color: #d9d3ff; tab-size: 4; }
+.code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font: 13.5px/1.65 var(--font-mono); color: var(--scr-code); tab-size: 4; }
 .code pre .hl-line { background: rgba(255,42,109,.12); display: inline-block; width: 100%; box-shadow: inset 2px 0 0 var(--pink); }
 
 .btn {
@@ -225,7 +325,7 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 /* ---------- robot simulator ---------- */
 .sim {
   margin: 1.8em 0; border-radius: 18px; overflow: hidden;
-  background: #0d0826; border: 1px solid var(--line);
+  background: var(--scr-base); border: 1px solid var(--line);
   box-shadow: 0 30px 80px -40px rgba(255,42,109,.45), 0 0 0 1px rgba(185,103,255,.08) inset;
 }
 .sim-bar {
@@ -305,7 +405,7 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 @keyframes scan { from { r: 4; opacity: .9; } to { r: 60; opacity: 0; } }
 
 /* ---------- concept diagram ---------- */
-.diagram { margin: 1.8em 0; padding: 18px; border-radius: 18px; background: #0d0826; border: 1px solid var(--line); }
+.diagram { margin: 1.8em 0; padding: 18px; border-radius: 18px; background: var(--scr-base); border: 1px solid var(--line); }
 .diagram-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .diagram-controls .caption { flex: 1; min-width: 200px; color: var(--muted); font-size: .9rem; }
 .diagram-controls .step { font-family: var(--font-pixel); font-size: .6rem; color: var(--pink); }
@@ -457,7 +557,7 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
 
 /* ---------- tabs ---------- */
-.tabs { margin: 1.4em 0; border: 1px solid var(--line); border-radius: var(--radius); background: #0d0826; overflow: hidden; }
+.tabs { margin: 1.4em 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--scr-base); overflow: hidden; }
 .tab-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .tab-list button { padding: 7px 13px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); font: 600 .82rem var(--font-body); cursor: pointer; transition: all .2s; }
 .tab-list button:hover { color: var(--text); background: var(--surface-2); }
@@ -501,7 +601,7 @@ tr:last-child td { border-bottom: 0; }
 }
 
 /* ---------- widgets (widgets.js) ---------- */
-.widget { border-radius: 18px; background: #0d0826; border: 1px solid var(--line); overflow: hidden; }
+.widget { border-radius: 18px; background: var(--scr-base); border: 1px solid var(--line); overflow: hidden; }
 .widget-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .widget-bar .title { font-family: var(--font-pixel); font-size: .58rem; color: var(--muted); letter-spacing: .08em; flex: 1; }
 .widget svg { display: block; width: 100%; height: auto; }
@@ -590,9 +690,9 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 860px) { .sg-body { grid-template-columns: 1fr; } .sg-col + .sg-col { border-left: 0; border-top: 1px solid var(--line-soft); } .sg-col { min-height: 0; } }
 
 /* ---------- GOLD: our field chapter ---------- */
-:root { --gold: #ffcf40; --gold-2: #ff9f1c; --glow-gold: 0 0 14px rgba(255,207,64,.55), 0 0 40px rgba(255,159,28,.25); }
-.gold-text { background: linear-gradient(90deg, #fff1b8, var(--gold) 40%, var(--gold-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.gold-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-family: var(--font-pixel); font-size: .55rem; letter-spacing: .1em; color: #1a1030; background: linear-gradient(90deg, #fff1b8, var(--gold), var(--gold-2)); box-shadow: var(--glow-gold); }
+:root { --glow-gold: 0 0 14px rgba(255,207,64,.55), 0 0 40px rgba(255,159,28,.25); }
+.gold-text { background: linear-gradient(90deg, var(--gold-hi), var(--gold) 40%, var(--gold-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.gold-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-family: var(--font-pixel); font-size: .55rem; letter-spacing: .1em; color: #1a1030; background: linear-gradient(90deg, #fff1b8, #ffcf40, #ff9f1c); box-shadow: var(--glow-gold); }
 .gold-frame { position: relative; padding: 26px 24px; border-radius: 18px; background: linear-gradient(135deg, rgba(255,207,64,.12), rgba(255,159,28,.05) 60%, transparent); border: 1px solid rgba(255,207,64,.5); box-shadow: var(--glow-gold); overflow: hidden; }
 .gold-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,241,184,.18) 50%, transparent 70%); transform: translateX(-100%); animation: shine 4.5s ease-in-out infinite; pointer-events: none; }
 @keyframes shine { 60%, 100% { transform: translateX(100%); } }

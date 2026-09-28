@@ -115,9 +115,31 @@ function buildTopbar() {
     <a class="top-link" href="${url("index.html")}#roadmap">Roadmap</a>
     <a class="top-link" href="${url("chapters/" + CHAPTERS[0].slug + ".html")}">Start</a>
     <a class="top-link" href="${url("index.html")}#crew">Crew</a>
+    <button class="btn theme-btn" type="button"></button>
     <a class="btn" href="${SITE.repo}" target="_blank" rel="noopener">GitHub ↗</a>`;
+  setupThemeToggle(el.querySelector(".theme-btn"));
   const btn = el.querySelector(".menu-btn");
   if (btn) btn.addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+}
+
+/* Theme: "paper" (default, light pages) or "dark" (graphite). The <head> of every
+   page applies the saved choice before first paint; this button switches it. */
+const THEME_KEY = "robot-agents-theme";
+function setupThemeToggle(btn) {
+  const root = document.documentElement;
+  const label = () => {
+    const dark = root.dataset.theme === "dark";
+    btn.textContent = dark ? "☀ Light" : "☾ Dark";
+    btn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    btn.setAttribute("aria-pressed", String(dark));
+  };
+  btn.addEventListener("click", () => {
+    const dark = root.dataset.theme !== "dark";
+    if (dark) root.dataset.theme = "dark"; else delete root.dataset.theme;
+    try { localStorage.setItem(THEME_KEY, dark ? "dark" : "paper"); } catch {}
+    label();
+  });
+  label();
 }
 
 function buildSidebar(current) {
