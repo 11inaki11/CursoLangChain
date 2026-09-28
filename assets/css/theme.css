@@ -414,6 +414,11 @@ main.content { padding: 48px clamp(20px, 5vw, 64px) 80px; min-width: 0; }
 .d-node text { font: 600 13px var(--font-display); fill: var(--text); text-anchor: middle; }
 .d-node .sub { font: 10px var(--font-mono); fill: var(--muted); }
 .d-node, .d-edge { transition: opacity .6s, transform .6s; }
+.d-world { transition: transform 1s cubic-bezier(.6, 0, .2, 1); }
+.d-zone { transition: opacity .6s; }
+.d-zone rect { fill: none; stroke-width: 1.2; stroke-dasharray: 6 5; opacity: .7; }
+.d-node.small text { font-size: 11px; }
+.d-edge.thin path { stroke-width: 1.1; opacity: .75; }
 .d-hidden { opacity: 0; pointer-events: none; }
 .d-edge path { fill: none; stroke-width: 1.6; }
 .d-edge.dashed path { stroke-dasharray: 5 5; animation: dash 1.2s linear infinite; }

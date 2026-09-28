@@ -315,7 +315,10 @@ window.DIAGRAMS = {
       "Memory: a checkpointer saves every step, so conversations survive between calls.",
       "Human in the loop: the operator gives goals and approves risky actions.",
       "Other agents are nodes too: a supervisor routes work to specialised robots.",
+      "Zoom out: R-80 and its whole ecosystem become one node. SCOUT and GRIP bring their own LLM, tools and memory, and the agents talk to each other. That's a multi-agent system (chapter 5).",
     ],
+    // layer 8 (stage 7): everything before shrinks into a cluster at the top
+    zoom: { stage: 7, scale: 0.42, dx: 226, dy: 6 },
     nodes: [
       { id: "llm",   x: 310, y: 20,  w: 170, h: 64, label: "LLM",        sub: "Gemini · DeepSeek · local", color: "purple", stage: 0 },
       { id: "agent", x: 300, y: 170, w: 190, h: 76, label: "Agent R-80", sub: "decide → act → observe", color: "pink", sprite: "pink", stage: 1 },
@@ -323,7 +326,21 @@ window.DIAGRAMS = {
       { id: "rag",   x: 590, y: 260, w: 170, h: 64, label: "RAG",        sub: "search_manuals()", color: "green", stage: 3 },
       { id: "mem",   x: 310, y: 330, w: 170, h: 64, label: "Memory",     sub: "checkpointer · thread", color: "orange", stage: 4 },
       { id: "human", x: 20,  y: 100, w: 170, h: 64, label: "Operator",   sub: "human in the loop", color: "cyan", stage: 5 },
-      { id: "squad", x: 20,  y: 260, w: 170, h: 64, label: "Other agents", sub: "SCOUT · GRIP", color: "cyan", stage: 6 },
+      { id: "squad", x: 20,  y: 260, w: 170, h: 64, label: "Other agents", sub: "SCOUT · GRIP", color: "cyan", stage: 6, until: 7 },
+
+      // ---- layer 8: the multi-agent view ----
+      { id: "zone-r80",   shape: "zone", x: 224, y: 4,   w: 332, h: 178, color: "pink",   stage: 7, delay: 0.8 },
+      { id: "r80hub",     virtual: true, x: 352, y: 77,  w: 80,  h: 32 },   // R-80's agent node after the zoom
+      { id: "zone-scout", shape: "zone", x: 8,   y: 232, w: 250, h: 180, color: "cyan",   stage: 7, delay: 0.7 },
+      { id: "scout",      x: 78,  y: 306, w: 120, h: 48, label: "SCOUT", sub: "explorer", color: "cyan", sprite: "cyan", stage: 7, delay: 0.7 },
+      { id: "scout-llm",  x: 18,  y: 246, w: 86,  h: 28, label: "LLM", color: "purple", small: true, stage: 7, delay: 0.9 },
+      { id: "scout-tools",x: 18,  y: 372, w: 86,  h: 28, label: "move · scan", color: "yellow", small: true, stage: 7, delay: 0.9 },
+      { id: "scout-rag",  x: 164, y: 372, w: 86,  h: 28, label: "manuals", color: "green", small: true, stage: 7, delay: 0.9 },
+      { id: "zone-grip",  shape: "zone", x: 522, y: 232, w: 250, h: 180, color: "yellow", stage: 7, delay: 0.7 },
+      { id: "grip",       x: 582, y: 306, w: 120, h: 48, label: "GRIP", sub: "carrier", color: "yellow", sprite: "yellow", stage: 7, delay: 0.7 },
+      { id: "grip-llm",   x: 676, y: 246, w: 86,  h: 28, label: "LLM", color: "purple", small: true, stage: 7, delay: 0.9 },
+      { id: "grip-tools", x: 676, y: 372, w: 86,  h: 28, label: "pick · place", color: "yellow", small: true, stage: 7, delay: 0.9 },
+      { id: "grip-mem",   x: 532, y: 372, w: 86,  h: 28, label: "memory", color: "orange", small: true, stage: 7, delay: 0.9 },
     ],
     edges: [
       { from: "agent", to: "llm",   label: "thinks with", color: "purple", stage: 1 },
@@ -331,7 +348,19 @@ window.DIAGRAMS = {
       { from: "agent", to: "rag",   label: "retrieves", color: "green", stage: 3 },
       { from: "agent", to: "mem",   label: "saves state", color: "orange", dashed: true, stage: 4 },
       { from: "human", to: "agent", label: "goal / approval", color: "cyan", stage: 5 },
-      { from: "squad", to: "agent", label: "routes", color: "cyan", dashed: true, stage: 6 },
+      { from: "squad", to: "agent", label: "routes", color: "cyan", dashed: true, stage: 6, until: 7 },
+
+      // layer 8: each agent wired to its own nodes…
+      { from: "scout", to: "scout-llm",   color: "purple", thin: true, arrow: false, stage: 7, delay: 1.0 },
+      { from: "scout", to: "scout-tools", color: "yellow", thin: true, arrow: false, stage: 7, delay: 1.0 },
+      { from: "scout", to: "scout-rag",   color: "green",  thin: true, arrow: false, stage: 7, delay: 1.0 },
+      { from: "grip",  to: "grip-llm",    color: "purple", thin: true, arrow: false, stage: 7, delay: 1.0 },
+      { from: "grip",  to: "grip-tools",  color: "yellow", thin: true, arrow: false, stage: 7, delay: 1.0 },
+      { from: "grip",  to: "grip-mem",    color: "orange", thin: true, arrow: false, stage: 7, delay: 1.0 },
+      // …and the agents talking to each other
+      { from: "r80hub", to: "scout", label: "messages", color: "pink", dashed: true, both: true, stage: 7, delay: 1.2 },
+      { from: "r80hub", to: "grip",  label: "messages", color: "pink", dashed: true, both: true, stage: 7, delay: 1.2 },
+      { from: "scout",  to: "grip",  label: "messages", color: "pink", dashed: true, both: true, stage: 7, delay: 1.2 },
     ],
   },
 
