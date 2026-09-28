@@ -715,3 +715,6 @@ body[data-chapter="07-ros2-field"] h3 { color: var(--gold); }
 .lesson-list li span { color: var(--muted); font-size: .9rem; }
 .map-table td:first-child { color: var(--cyan); font-family: var(--font-mono); font-size: .84rem; white-space: nowrap; }
 .map-table td:nth-child(2) { color: var(--gold); font-family: var(--font-mono); font-size: .84rem; white-space: nowrap; }
+
+/* ---------- theme transition canvas ---------- */
+.theme-wipe { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1000; pointer-events: none; image-rendering: pixelated; }

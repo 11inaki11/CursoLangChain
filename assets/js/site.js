@@ -135,11 +135,64 @@ function setupThemeToggle(btn) {
   };
   btn.addEventListener("click", () => {
     const dark = root.dataset.theme !== "dark";
+    const apply = () => {
+      if (dark) root.dataset.theme = "dark"; else delete root.dataset.theme;
+      try { localStorage.setItem(THEME_KEY, dark ? "dark" : "paper"); } catch {}
+      label();
+    };
+    // Peek at the target theme's page colour without painting it (no yield between set and unset).
     if (dark) root.dataset.theme = "dark"; else delete root.dataset.theme;
-    try { localStorage.setItem(THEME_KEY, dark ? "dark" : "paper"); } catch {}
-    label();
+    const targetBg = getComputedStyle(root).getPropertyValue("--bg").trim();
+    if (dark) delete root.dataset.theme; else root.dataset.theme = "dark";
+    pixelWipe(apply, targetBg);
   });
   label();
+}
+
+/* Pixel-dissolve transition: a low-res canvas "consumes" the page with the new
+   theme's colour, the theme swaps underneath while fully covered, then the
+   pixels burn away. The wave front flickers in neon. */
+let wiping = false;
+function pixelWipe(apply, targetBg) {
+  if (wiping || matchMedia("(prefers-reduced-motion: reduce)").matches) { apply(); return; }
+  wiping = true;
+  const CELL = 14, DURATION = 1100;
+  const cols = Math.ceil(innerWidth / CELL), rows = Math.ceil(innerHeight / CELL), n = cols * rows;
+  const cv = document.createElement("canvas");
+  cv.className = "theme-wipe"; cv.width = cols; cv.height = rows;
+  document.body.appendChild(cv);
+  const ctx = cv.getContext("2d"), img = ctx.createImageData(cols, rows), d = img.data;
+
+  const NEON = [[255, 42, 109], [5, 217, 232], [249, 200, 14], [185, 103, 255], [61, 252, 155]];
+  const m = /^#?([0-9a-f]{6})$/i.exec(targetBg);
+  const bg = m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : [17, 19, 24];
+  // Per-pixel threshold: mostly noise, with a diagonal bias so a wave sweeps across.
+  const thr = new Float32Array(n), neon = new Uint8Array(n);
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const i = y * cols + x;
+    thr[i] = 0.6 * Math.random() + 0.4 * ((x + y) / (cols + rows));
+    neon[i] = (Math.random() * NEON.length) | 0;
+  }
+  const ease = (t) => t * t * (3 - 2 * t);
+  let swapped = false;
+  const t0 = performance.now();
+  function frame(now) {
+    const p = Math.min(1, (now - t0) / DURATION);
+    const covering = p < 0.5;
+    const w = ease(covering ? p / 0.5 : (p - 0.5) / 0.5);
+    if (!covering && !swapped) { swapped = true; apply(); }
+    for (let i = 0; i < n; i++) {
+      const t = thr[i], o = i * 4;
+      const covered = covering ? t < w : t > w;
+      if (!covered) { d[o + 3] = 0; continue; }
+      const c = Math.abs(t - w) < 0.07 ? NEON[neon[i]] : bg;
+      d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    if (p < 1) requestAnimationFrame(frame);
+    else { cv.remove(); wiping = false; }
+  }
+  requestAnimationFrame(frame);
 }
 
 function buildSidebar(current) {
