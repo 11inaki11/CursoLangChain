@@ -173,7 +173,7 @@ capabilities:
 <p>The chapter script works with or without ROS. Without ROS 2 it prints the messages it would publish. With ROS 2 sourced it publishes real <code>std_msgs</code> topics (tested on Jazzy).</p>
 <div class="code" data-file="terminal" data-download="code/ch7_ros2_bridge.py"><pre><code class="lang-bash"># terminal 1: no API key needed for the gate demo
 source /opt/ros/jazzy/setup.bash
-python ch7_ros2_bridge.py --no-llm     # drop --no-llm to let the agent drive
+python3 ch7_ros2_bridge.py --no-llm     # drop --no-llm to let the agent drive
 
 # terminal 2: watch what reaches the robot
 source /opt/ros/jazzy/setup.bash

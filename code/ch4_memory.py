@@ -3,7 +3,7 @@ Chapter 4 — Robot memory.
 
 1. A checkpointer stores each conversation (thread) so the robot remembers.
 2. SummarizationMiddleware compresses old messages before the context overflows.
-Run:  python ch4_memory.py
+Run:  python3 ch4_memory.py
 """
 
 from langchain.agents import create_agent

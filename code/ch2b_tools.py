@@ -3,7 +3,7 @@ Chapter 2b — Tools: give the robot hands and sensors.
 
 A tool is just a Python function with a docstring. The @tool decorator
 turns it into something the LLM can decide to call.
-Run:  python ch2b_tools.py
+Run:  python3 ch2b_tools.py
 """
 
 from langchain.agents import create_agent

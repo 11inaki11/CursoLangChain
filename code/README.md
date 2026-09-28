@@ -3,11 +3,11 @@
 Every script here is the real version of the emulated demos on the website.
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # set ROBOT_MODEL + the key of your provider
-python robot_world.py         # sanity check, no LLM needed
-python ch2b_tools.py          # first robot agent with tools
+python3 robot_world.py         # sanity check, no LLM needed
+python3 ch2b_tools.py          # first robot agent with tools
 ```
 
 | File | Chapter |

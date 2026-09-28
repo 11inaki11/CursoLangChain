@@ -2,7 +2,7 @@
 Chapter 2a — Same robot, different brains.
 
 The agent is identical; only the model string changes.
-Run:  python ch2a_models.py
+Run:  python3 ch2a_models.py
 """
 
 from langchain.agents import create_agent

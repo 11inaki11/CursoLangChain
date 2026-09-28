@@ -34,8 +34,9 @@
 <h2 id="get-the-code">Get the code</h2>
 <div class="code" data-file="terminal"><pre><code class="lang-bash">git clone https://github.com/11inaki11/CursoLangChain.git
 cd CursoLangChain/code
-python -m venv .venv &amp;&amp; source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt</code></pre></div>
+<div class="callout tip"><p><strong>On Windows</strong>, use <code>py</code> instead of <code>python3</code> (for example <code>py -m venv .venv</code> and <code>py robot_world.py</code>). macOS and Linux: <code>python3</code> as shown.</p></div>
 <div class="download-row">
   <a class="btn primary" href="https://github.com/11inaki11/CursoLangChain/archive/refs/heads/main.zip">⬇ Download all code (.zip)</a>
   <a class="btn" href="../code/requirements.txt" download>requirements.txt</a>
@@ -109,7 +110,7 @@ through tools.
     5  DOOR . . . . . . SHELF_B
        0    1 2 3 4 5 6 7   x
 """</code></pre></div>
-<div class="code" data-file="output"><pre><code class="lang-bash">$ python robot_world.py
+<div class="code" data-file="output"><pre><code class="lang-bash">$ python3 robot_world.py
 r80 arrived at shelf_a after 7 steps. Battery: 86%.
 r80 picked up red_cube.
 r80 arrived at workbench after 7 steps. Battery: 72%.

@@ -8,7 +8,7 @@ The website **emulates** each agent run (no LLM behind it); the scripts in [`cod
 It's a static site with no build step. Any static server works:
 
 ```bash
-python -m http.server 8000     # then open http://localhost:8000
+python3 -m http.server 8000     # then open http://localhost:8000
 ```
 
 To deploy, turn on GitHub Pages for the repo root (`main` / `/`).

@@ -5,7 +5,7 @@ System  -> the robot's rules / personality (set by you, the developer)
 Human   -> anything coming from OUTSIDE the agent: an operator... or another agent
 AI      -> what this model answered, possibly with tool_calls
 Tool    -> the result of running a tool, linked by tool_call_id
-Run:  python ch3_messages.py
+Run:  python3 ch3_messages.py
 """
 
 from langchain.agents import create_agent

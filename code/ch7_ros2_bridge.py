@@ -11,8 +11,8 @@ data/capabilities.yaml, and a deterministic gate checks every value.
 
 Runs anywhere: without ROS 2 it prints the messages it would publish.
 With ROS 2 sourced (rclpy available) it publishes real std_msgs topics.
-Run:  python ch7_ros2_bridge.py            gate demo + agent
-      python ch7_ros2_bridge.py --no-llm   gate demo only (no API key needed)
+Run:  python3 ch7_ros2_bridge.py            gate demo + agent
+      python3 ch7_ros2_bridge.py --no-llm   gate demo only (no API key needed)
 """
 
 import sys

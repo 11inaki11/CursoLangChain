@@ -8,7 +8,7 @@ Chapter 5 — A robot squad with LangGraph.
 - SCOUT: explores, reads sensors and the manuals.
 - GRIP : moves items with its gripper.
 - The supervisor reads the shared state and routes the next step.
-Run:  python ch5_multiagent.py
+Run:  python3 ch5_multiagent.py
 """
 
 from typing import Literal

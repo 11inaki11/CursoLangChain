@@ -2,7 +2,7 @@
 Chapter 6 — Mission control: talk to R-80 in natural language, live.
 
 Streams every tool call as it happens and redraws the lab map.
-Run:  python ch6_robot_control.py      (type 'quit' to exit)
+Run:  python3 ch6_robot_control.py      (type 'quit' to exit)
 """
 
 from langchain.agents import create_agent

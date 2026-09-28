@@ -3,7 +3,7 @@ Chapter 2c — RAG is just another tool.
 
 We embed the robot manuals (data/manuals/*.md or *.pdf), put them in a
 vector store and expose the retriever as a tool the robot can call.
-Run:  python ch2c_rag.py
+Run:  python3 ch2c_rag.py
 """
 
 from pathlib import Path
