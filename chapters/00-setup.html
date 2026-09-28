@@ -113,7 +113,8 @@ D . . . . . . A
 X . . . . . . B</code></pre></div>
 <p>In the map, <code>D</code> is the dock, <code>A</code> and <code>B</code> are shelves A and B, <code>X</code> is the door, and the lowercase <code>r</code> is R-80, now standing on the workbench. If you see this, your Python setup is ready.</p>
 <h3>The live viewer</h3>
-<p>Every script with robots opens this viewer at <code>http://localhost:8765</code>: the same lab as the website's simulator, but driven by your <strong>real</strong> agent. You see its messages, each tool call and every robot move as they happen. When the script finishes, press <kbd>Enter</kbd> in the terminal to close it.</p>
+<p>Every script opens this viewer at <code>http://localhost:8765</code>: the same lab as the website's simulator, but driven by your <strong>real</strong> agent. You see the system prompt, its messages, each tool call and every robot move as they happen. When the script finishes, press <kbd>Enter</kbd> in the terminal to close it.</p>
+<p><strong>Keep the tab open.</strong> The next script you run reuses it: the lab resets to its initial state and follows the new example. A new tab only opens when none is open.</p>
 <div class="callout tip"><p>Running over SSH or without a browser? Add <code>--no-viewer</code> (or set <code>LAB_VIEWER=0</code>) and everything prints to the terminal only.</p></div>
 <p>Curious what's inside? The file starts with the lab layout:</p>
 <div class="code" data-file="robot_world.py" data-download="code/robot_world.py"><pre><code class="lang-python">"""

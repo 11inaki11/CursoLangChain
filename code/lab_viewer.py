@@ -6,12 +6,14 @@ REAL agent: every tool call, message and robot movement shows up live at
 http://localhost:8765.
 
     from lab_viewer import start_viewer, watch, wait_to_close
-    start_viewer()                        # opens the browser
-    agent = watch(create_agent(...))      # stream the agent's messages to it
+    start_viewer("Chapter 2b · Tools", model=DEFAULT_MODEL)   # reuses an open tab, or opens one
+    agent = watch(create_agent(...), system=SYSTEM_PROMPT)     # stream the agent's messages to it
     ...
     wait_to_close()                       # keep the page alive until Enter
 
-Disable it with --no-viewer or LAB_VIEWER=0 (e.g. over SSH without a browser).
+Each run is a new session: a tab left open from a previous run resets itself
+to the initial lab and follows the new script. A new tab only opens if none
+is connected. Disable it with --no-viewer or LAB_VIEWER=0 (e.g. over SSH).
 Standard library only: no extra install.
 """
 
@@ -21,6 +23,8 @@ import json
 import os
 import sys
 import threading
+import time
+import uuid
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -31,22 +35,27 @@ from robot_world import WORLD, World
 
 PAGE = Path(__file__).parent / "viewer" / "index.html"
 _server: ThreadingHTTPServer | None = None
+_last_poll = 0.0  # when an open tab last asked for the state
 
 
 def enabled() -> bool:
     return "--no-viewer" not in sys.argv and os.getenv("LAB_VIEWER", "1") != "0"
 
 
-def start_viewer(world: World = WORLD, port: int = 8765, open_browser: bool = True) -> str | None:
-    """Serve the live viewer on localhost and open it. Returns the URL (or None if disabled)."""
+def start_viewer(title: str = "Lab 80", model: str = "", world: World = WORLD,
+                 port: int = 8765, open_browser: bool = True) -> str | None:
+    """Serve the live viewer on localhost. Reuses an open tab, else opens one. Returns the URL."""
     global _server
     if not enabled():
         return None
+    session = {"id": uuid.uuid4().hex[:8], "title": title, "model": model}
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
+            global _last_poll
             if self.path.startswith("/state"):
-                body, ctype = json.dumps(world.snapshot()).encode(), "application/json"
+                _last_poll = time.monotonic()
+                body, ctype = json.dumps({"session": session, **world.snapshot()}).encode(), "application/json"
             else:
                 body, ctype = PAGE.read_bytes(), "text/html; charset=utf-8"
             self.send_response(200)
@@ -71,9 +80,16 @@ def start_viewer(world: World = WORLD, port: int = 8765, open_browser: bool = Tr
     threading.Thread(target=_server.serve_forever, daemon=True).start()
     world.realtime = True  # movements take time so you can watch them
     url = f"http://localhost:{_server.server_address[1]}"
-    print(f"[viewer] live lab at {url}")
-    if open_browser:
-        webbrowser.open(url)
+    # A tab left open from a previous run keeps polling this port: give it a moment to reconnect.
+    started = time.monotonic()
+    while time.monotonic() - started < 1.5 and _last_poll < started:
+        time.sleep(0.1)
+    if _last_poll >= started:
+        print(f"[viewer] live lab at {url} (reusing the open tab)")
+    else:
+        print(f"[viewer] live lab at {url}")
+        if open_browser:
+            webbrowser.open(url)
     return url
 
 
@@ -107,15 +123,18 @@ class ViewerCallback(BaseCallbackHandler):
 class watch:
     """Wrap an agent (or any LangGraph graph) so the viewer shows what it does."""
 
-    def __init__(self, agent, world: World = WORLD) -> None:
+    def __init__(self, agent, system: str | None = None, world: World = WORLD) -> None:
         self._agent, self._world, self._callback = agent, world, ViewerCallback(world)
+        self._system = system  # shown once, like the SystemMessage in the web simulator
 
     def _prepare(self, inputs, config):
-        messages = (inputs or {}).get("messages") or []
-        if messages:
-            last = messages[-1]
-            text = last.get("content") if isinstance(last, dict) else getattr(last, "text", str(last))
-            self._world.emit("human", str(text))
+        if self._system:
+            self._world.emit("system", self._system)
+            self._system = None
+        for msg in (inputs or {}).get("messages") or []:
+            role = msg.get("role", "user") if isinstance(msg, dict) else getattr(msg, "type", "human")
+            text = msg.get("content") if isinstance(msg, dict) else getattr(msg, "text", str(msg))
+            self._world.emit("system" if role == "system" else "human", str(text))
         config = dict(config or {})
         config["callbacks"] = list(config.get("callbacks") or []) + [self._callback]
         return config

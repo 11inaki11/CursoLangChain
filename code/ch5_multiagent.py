@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from ch2b_tools import make_robot_tools
 from ch2c_rag import build_manual_tool
-from config import get_model
+from config import DEFAULT_MODEL, get_model
 from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
@@ -104,7 +104,7 @@ squad = builder.compile()
 
 if __name__ == "__main__":
     print(squad.get_graph().draw_mermaid())  # paste into mermaid.live to see the graph
-    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    start_viewer("Chapter 5 · Robot squad", model=DEFAULT_MODEL)  # live lab at http://localhost:8765
     goal = "Find the sensor kit and bring it to the workbench, following the lab safety rules."
     final = watch(squad).invoke({"messages": [HumanMessage(goal)]})
     for msg in final["messages"]:

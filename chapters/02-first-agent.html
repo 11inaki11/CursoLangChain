@@ -128,13 +128,16 @@ agent = create_agent(model=model, system_prompt="You are R-80, a lab robot.")</c
 
 
 def boot(brain: str) -&gt; None:
-    agent = create_agent(model=get_model(brain), system_prompt=SYSTEM_PROMPT)
+    WORLD.emit("note", f'model = get_model("{brain}")')
+    agent = watch(create_agent(model=get_model(brain), system_prompt=SYSTEM_PROMPT), system=SYSTEM_PROMPT)
     result = agent.invoke({"messages": [{"role": "user", "content": "Boot up and introduce yourself."}]})
     print(f"\n[{brain}]\n{result['messages'][-1].text}")
 
 
 if __name__ == "__main__":
     brains = available_models() if "--compare" in sys.argv else [DEFAULT_MODEL]
+    WORLD.add_robot("r80")
+    start_viewer("Chapter 2a · Swap the brain", model=", ".join(brains))  # live lab at http://localhost:8765
     for brain in brains:
         try:
             boot(brain)
@@ -186,12 +189,12 @@ if __name__ == "__main__":
 <div class="sim" id="sim-tools" data-scenario="ch2b-tools"></div>
 <div class="code" data-file="ch2b_tools.py" data-download="code/ch2b_tools.py" data-run="sim-tools"><pre><code class="lang-python">if __name__ == "__main__":
     WORLD.add_robot("r80")
-    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    start_viewer("Chapter 2b · Tools", model=DEFAULT_MODEL)  # live lab at http://localhost:8765
     agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt=SYSTEM_PROMPT,
-    ))
+    ), system=SYSTEM_PROMPT)
     result = agent.invoke(
         {"messages": [{"role": "user", "content": "Bring the red cube to the workbench."}]}
     )

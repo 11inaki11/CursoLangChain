@@ -22,6 +22,8 @@
   .led { width: 10px; height: 10px; border-radius: 50%; background: var(--dim); }
   .led.on { background: var(--green); box-shadow: 0 0 10px var(--green); }
   .status { font: .75rem var(--mono); color: var(--muted); }
+  .brain { font: .74rem var(--mono); color: var(--purple); border: 1px solid rgba(185,103,255,.4); padding: 3px 9px; border-radius: 999px; }
+  .brain:empty { display: none; }
   .body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 560px; }
   .world { padding: 16px; border-right: 1px solid var(--line-soft); background: radial-gradient(ellipse at 50% 120%, rgba(255,42,109,.18), transparent 60%); }
   svg { width: 100%; height: auto; display: block; }
@@ -45,6 +47,8 @@
   @keyframes in { from { opacity: 0; transform: translateY(6px); } }
   .msg .kind { font: .7rem var(--mono); color: var(--c); margin-bottom: 2px; }
   .msg.human { --c: var(--cyan); } .msg.ai { --c: var(--pink); } .msg.call { --c: var(--pink); } .msg.world { --c: var(--yellow); }
+  .msg.system { --c: var(--purple); } .msg.gate_ok { --c: var(--green); } .msg.gate_reject { --c: var(--pink); background: rgba(255,42,109,.08); }
+  .msg.note { --c: var(--dim); background: transparent; border: 1px dashed var(--line); color: var(--muted); font-style: italic; }
   .msg.call .text { font-family: var(--mono); color: var(--yellow); font-size: .82rem; }
   .text { white-space: pre-wrap; word-break: break-word; }
   @media (max-width: 860px) { .body { grid-template-columns: 1fr; } .world { border-right: 0; border-bottom: 1px solid var(--line-soft); } }
@@ -53,7 +57,7 @@
 </head>
 <body>
 <div class="frame">
-  <div class="bar"><span class="led" id="led"></span><span class="title">LAB 80 · LIVE FROM YOUR PYTHON SCRIPT</span><span class="status" id="status">connecting…</span></div>
+  <div class="bar"><span class="led" id="led"></span><span class="title" id="title">LAB 80 · LIVE FROM YOUR PYTHON SCRIPT</span><span class="brain" id="brain"></span><span class="status" id="status">connecting…</span></div>
   <div class="body">
     <div class="world"><svg id="map" viewBox="-6 -6 460 348"></svg><div class="hud" id="hud"></div></div>
     <div class="console">
@@ -74,10 +78,22 @@
     { h: "#f9c80e", b: "#ff8a3d", w: "#fff", e: "#0b0620", a: "#05d9e8", y: "#ff2a6d", m: "#0b0620", t: "#3a2a8a" },
     { h: "#3dfc9b", b: "#1f8a70", w: "#fff", e: "#0b0620", a: "#b967ff", y: "#f9c80e", m: "#0b0620", t: "#3a2a8a" },
   ];
-  const LABELS = { human: "HumanMessage · operator", ai: "AIMessage", call: "AIMessage · tool_call", world: "ToolMessage · lab" };
+  const LABELS = { system: "SystemMessage", human: "HumanMessage · operator", ai: "AIMessage", call: "AIMessage · tool_call",
+                   world: "ToolMessage · lab", note: "// note", gate_ok: "Safety gate ✓ published to ROS 2", gate_reject: "Safety gate ✗ rejected" };
   const map = document.getElementById("map"), log = document.getElementById("log"), hud = document.getElementById("hud");
-  const robotEls = {}, itemEls = {};
-  let drawn = false, seen = 0;
+  let robotEls = {}, itemEls = {};
+  let drawn = false, seen = 0, session = null;
+
+  // A new script run = a new session: go back to the initial lab and an empty console.
+  function reset(s) {
+    session = s.id;
+    robotEls = {}; itemEls = {}; drawn = false; seen = 0;
+    map.innerHTML = ""; hud.innerHTML = "";
+    log.innerHTML = `<div class="empty">Waiting for the agent…</div>`;
+    document.getElementById("title").textContent = `LAB 80 · ${s.title}`.toUpperCase();
+    document.getElementById("brain").textContent = s.model ? `🧠 ${s.model}` : "";
+    document.title = `Lab 80 · ${s.title}`;
+  }
 
   const sprite = (p) => SPRITE.map((row, y) => [...row].map((c, x) => c === "." ? "" :
     `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${p[c]}"/>`).join("")).join("");
@@ -105,6 +121,7 @@
   function center(state, loc) { const [x, y] = state.locations[loc]; return [x * CELL + CELL / 2, y * CELL + CELL / 2]; }
 
   function update(state) {
+    if (state.session.id !== session) reset(state.session);
     if (!drawn) drawStatic(state);
     const perLoc = {};
     for (const [k, where] of Object.entries(state.items)) {
@@ -149,7 +166,7 @@
       document.getElementById("status").textContent = "connected";
     } catch {
       document.getElementById("led").className = "led";
-      document.getElementById("status").textContent = "script finished";
+      document.getElementById("status").textContent = "script finished · run another one to reuse this tab";
     }
     setTimeout(poll, 300);
   }

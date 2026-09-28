@@ -15,7 +15,7 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from ch2b_tools import make_robot_tools
-from config import get_embeddings, get_model
+from config import DEFAULT_MODEL, get_embeddings, get_model
 from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
@@ -58,12 +58,12 @@ SYSTEM_PROMPT = (
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    start_viewer("Chapter 2c · RAG", model=DEFAULT_MODEL)  # live lab at http://localhost:8765
     agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80") + [build_manual_tool()],
         system_prompt=SYSTEM_PROMPT,
-    ))
+    ), system=SYSTEM_PROMPT)
     question = "Fetch the sensor kit from shelf_b. Is there any rule I should know about zone B?"
     result = agent.invoke({"messages": [{"role": "user", "content": question}]})
     for message in result["messages"]:

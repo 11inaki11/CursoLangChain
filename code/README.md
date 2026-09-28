@@ -35,6 +35,7 @@ needs no key at all.
 
 ## Live viewer
 
-Scripts with robots open http://localhost:8765 in your browser and show the lab as the
-agent works. Press Enter in the terminal to close it when the script ends.
+Every script opens http://localhost:8765 in your browser and shows the lab as the agent
+works. Keep that tab open: the next script reuses it and resets the lab to its initial
+state. Press Enter in the terminal to close the viewer when a script ends.
 Add `--no-viewer` (or `LAB_VIEWER=0`) to run in the terminal only.

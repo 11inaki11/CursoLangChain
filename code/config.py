@@ -55,19 +55,20 @@ def available_models() -> list[str]:
 def _pick_default_model() -> str:
     if chosen := (os.getenv("ROBOT_MODEL") or "").strip():
         return chosen
-    if models := available_models():
-        return models[0]
-    raise SystemExit(
-        "No LLM configured. Put one API key in code/.env (e.g. DEEPSEEK_API_KEY=...) "
-        "or start Ollama. See .env.example."
-    )
+    models = available_models()
+    return models[0] if models else ""
 
 
-DEFAULT_MODEL = _pick_default_model()
+DEFAULT_MODEL = _pick_default_model()  # "" when nothing is configured (fine for no-LLM demos)
 
 
 def get_model(name: str | None = None, **kwargs):
     """Return a chat model. Swapping the robot's brain is one string."""
+    if not (name or DEFAULT_MODEL):
+        raise SystemExit(
+            "No LLM configured. Put one API key in code/.env (e.g. DEEPSEEK_API_KEY=...) "
+            "or start Ollama. See .env.example."
+        )
     return init_chat_model(name or DEFAULT_MODEL, temperature=0, **kwargs)
 
 

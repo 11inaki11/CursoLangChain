@@ -188,7 +188,7 @@ if __name__ == "__main__":
     from lab_viewer import start_viewer, wait_to_close
 
     WORLD.add_robot("r80")
-    start_viewer()
+    start_viewer("Boot sequence · robot_world.py")
     print(WORLD.move_to("r80", "shelf_a"))
     print(WORLD.pick("r80", "red_cube"))
     print(WORLD.move_to("r80", "workbench"))

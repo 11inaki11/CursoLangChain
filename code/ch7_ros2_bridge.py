@@ -24,7 +24,9 @@ from langchain.tools import tool
 from langchain_core.tools import StructuredTool
 from pydantic import Field, create_model
 
-from config import get_model
+from config import DEFAULT_MODEL, get_model
+from lab_viewer import start_viewer, wait_to_close, watch
+from robot_world import WORLD
 
 MANIFEST = yaml.safe_load((Path(__file__).parent / "data" / "capabilities.yaml").read_text())
 
@@ -89,9 +91,11 @@ def build_tools(gate: SafetyGate, bridge: RosBridge) -> list:
 
         def run(value, _cap=cap) -> str:
             if reason := gate.check(_cap["id"], value):
+                WORLD.emit("gate_reject", f"{_cap['id']}({value!r}): {reason}")
                 return reason                      # the LLM reads this and can adapt
             bridge.publish(_cap, value)
             gate.state[_cap["id"]] = value
+            WORLD.emit("gate_ok", f"{_cap['topic']} <- {value}")
             return f"OK: {_cap['id']} = {value} {_cap.get('units', '')}".strip()
 
         tools.append(StructuredTool.from_function(
@@ -113,18 +117,23 @@ SYSTEM_PROMPT = (
 
 if __name__ == "__main__":
     gate, bridge = SafetyGate(MANIFEST), RosBridge()
+    WORLD.add_robot("r80")
+    start_viewer("Chapter 7 · ROS 2 safety gate", model="" if "--no-llm" in sys.argv else DEFAULT_MODEL)
     tools = build_tools(gate, bridge)
     by_name = {t.name: t for t in tools}
 
     print("=== Safety gate demo (no LLM) ===")
+    WORLD.emit("note", "Safety gate demo: direct tool calls, no LLM")
     for name, value in [("set_speed", 0.2), ("set_speed", 0.8), ("set_speed", 1.5),
                         ("set_mode", "turbo"), ("set_mode", "slow")]:
         print(f"{name}({value!r}) -> {by_name[name].invoke({'value': value})}")
 
     if "--no-llm" not in sys.argv:
         print("\n=== Agent as high-level controller ===")
-        agent = create_agent(model=get_model(), tools=tools, system_prompt=SYSTEM_PROMPT)
+        WORLD.emit("note", "Now the agent drives, through the same gate")
+        agent = watch(create_agent(model=get_model(), tools=tools, system_prompt=SYSTEM_PROMPT), system=SYSTEM_PROMPT)
         request = "We're entering zone B to pick up the fragile sensor kit. Go at full speed and set everything up."
         result = agent.invoke({"messages": [{"role": "user", "content": request}]})
         for message in result["messages"]:
             message.pretty_print()
+    wait_to_close()

@@ -12,7 +12,7 @@ from langchain.agents import create_agent
 from langchain.messages import AIMessage, HumanMessage, SystemMessage
 
 from ch2b_tools import make_robot_tools
-from config import get_model
+from config import DEFAULT_MODEL, get_model
 from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
@@ -32,7 +32,7 @@ def as_seen_by(agent_name: str, log: list[tuple[str, str]]) -> list:
 if __name__ == "__main__":
     # --- 1. A single agent: the four message types ---
     WORLD.add_robot("r80")
-    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    start_viewer("Chapter 3 · Messages", model=DEFAULT_MODEL)  # live lab at http://localhost:8765
     agent = watch(create_agent(model=get_model(), tools=make_robot_tools("r80")))
 
     messages = [

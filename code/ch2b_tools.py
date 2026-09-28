@@ -9,7 +9,7 @@ Run:  python3 ch2b_tools.py
 from langchain.agents import create_agent
 from langchain.tools import tool
 
-from config import get_model
+from config import DEFAULT_MODEL, get_model
 from lab_viewer import start_viewer, wait_to_close, watch
 from robot_world import WORLD
 
@@ -57,12 +57,12 @@ SYSTEM_PROMPT = (
 
 if __name__ == "__main__":
     WORLD.add_robot("r80")
-    start_viewer()  # live lab at http://localhost:8765 (--no-viewer to skip)
+    start_viewer("Chapter 2b · Tools", model=DEFAULT_MODEL)  # live lab at http://localhost:8765
     agent = watch(create_agent(
         model=get_model(),
         tools=make_robot_tools("r80"),
         system_prompt=SYSTEM_PROMPT,
-    ))
+    ), system=SYSTEM_PROMPT)
     result = agent.invoke(
         {"messages": [{"role": "user", "content": "Bring the red cube to the workbench."}]}
     )

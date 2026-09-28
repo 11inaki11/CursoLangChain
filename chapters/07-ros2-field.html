@@ -116,9 +116,11 @@ capabilities:
 
         def run(value, _cap=cap) -&gt; str:
             if reason := gate.check(_cap["id"], value):
+                WORLD.emit("gate_reject", f"{_cap['id']}({value!r}): {reason}")
                 return reason                      # the LLM reads this and can adapt
             bridge.publish(_cap, value)
             gate.state[_cap["id"]] = value
+            WORLD.emit("gate_ok", f"{_cap['topic']} &lt;- {value}")
             return f"OK: {_cap['id']} = {value} {_cap.get('units', '')}".strip()
 
         tools.append(StructuredTool.from_function(
