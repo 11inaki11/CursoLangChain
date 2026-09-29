@@ -246,6 +246,8 @@ if __name__ == "__main__":
 <div class="prompt-box">
   <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
   <div class="prompt-text">Add a new tool open_door() to make_robot_tools in code/ch2b_tools.py. It should only work when the robot is at the door. Write a docstring the LLM can understand, then update the system prompt so R-80 asks for confirmation before opening it.</div>
+  <ol class="prompt-steps"><li>Open the <strong>repo folder</strong> (not <code>code/</code>) in your copilot and paste the prompt. It modifies <code>code/ch2b_tools.py</code>.</li><li>In <code>code/ch2b_tools.py</code>, change the task to <code>"Go to the door and open it."</code> so the new tool gets used.</li><li>Run the chapter script <code>ch2b_tools.py</code>. From the repo folder, with your venv active:<div class="code" data-file="terminal"><pre><code class="lang-bash">cd code
+python3 ch2b_tools.py</code></pre></div></li><li>You should see R-80 drive to the door, ask you to confirm, and stop. The door stays closed: the script sends one message, so nobody answers yes.</li></ol>
   <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
 </div>
 

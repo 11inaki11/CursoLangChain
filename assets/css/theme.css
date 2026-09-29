@@ -622,6 +622,10 @@ tr:last-child td { border-bottom: 0; }
 .prompt-text { padding: 14px 16px; font: .86rem/1.6 var(--font-mono); color: var(--text); white-space: pre-wrap; }
 .prompt-text a { color: var(--cyan); }
 .credit { font-size: .8rem; color: var(--dim); padding: 0 16px 12px; }
+.prompt-steps { margin: 0; padding: 0 16px 10px 36px; font-size: .86rem; color: var(--muted); }
+.prompt-steps li { margin: .3em 0; }
+.prompt-steps strong { color: var(--text); }
+.prompt-steps .code { margin: .5em 0 .7em; }
 
 /* ---------- wide blocks (break out of the text column) ---------- */
 .wide { position: relative; left: 50%; width: min(1180px, calc(100vw - var(--sidebar-w) - 80px)); transform: translateX(-50%); margin: 1.8em 0; }

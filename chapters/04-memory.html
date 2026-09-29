@@ -74,7 +74,11 @@ if __name__ == "__main__":
 
 <div class="prompt-box">
   <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
-  <div class="prompt-text">Replace InMemorySaver with a SQLite checkpointer in code/ch4_memory.py so R-80's missions persist between runs, and show me how to list the saved threads.</div>
+  <div class="prompt-text">Replace InMemorySaver with a SQLite checkpointer in code/ch4_memory.py so R-80's missions persist between runs, and add a --threads flag that lists the saved threads.</div>
+  <ol class="prompt-steps"><li>Open the <strong>repo folder</strong> (not <code>code/</code>) in your copilot and paste the prompt. It modifies <code>code/ch4_memory.py</code>.</li><li>Run <code>ch4_memory.py</code> twice, then list the threads. From the repo folder, with your venv active:<div class="code" data-file="terminal"><pre><code class="lang-bash">cd code
+python3 ch4_memory.py
+python3 ch4_memory.py            # again: the threads are still there
+python3 ch4_memory.py --threads  # list the saved threads</code></pre></div></li><li>You should see <code>mission-1</code> and <code>mission-2</code>, with more messages after the second run: the memory survived the restart. Delete the <code>.sqlite</code> file to start from zero.</li></ol>
   <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
 </div>
 

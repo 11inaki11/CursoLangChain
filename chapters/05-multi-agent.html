@@ -140,7 +140,9 @@ squad = builder.compile()</code></pre></div>
 
 <div class="prompt-box">
   <div class="prompt-head"><span class="pixel">🤖 ASK YOUR AI COPILOT</span></div>
-  <div class="prompt-text">Add a third robot, CHARGER, to the LangGraph squad in code/ch5_multiagent.py. It can move to other robots and recharge them. Add it as a node, add it to the supervisor's Route options, and make the supervisor send it when a robot's battery is below 30%.</div>
+  <div class="prompt-text">Add a third robot, CHARGER, to the LangGraph squad in code/ch5_multiagent.py. It can move to other robots and recharge them. Add it as a node, add it to the supervisor's Route options, and make the supervisor send it when a robot's battery is below 30%. Start GRIP at 25% battery so I can see CHARGER act.</div>
+  <ol class="prompt-steps"><li>Open the <strong>repo folder</strong> (not <code>code/</code>) in your copilot and paste the prompt. It modifies <code>code/ch5_multiagent.py</code>, and likely <code>code/robot_world.py</code> too: the lab has no action yet to recharge <em>another</em> robot.</li><li>Run the chapter script <code>ch5_multiagent.py</code>. From the repo folder, with your venv active:<div class="code" data-file="terminal"><pre><code class="lang-bash">cd code
+python3 ch5_multiagent.py</code></pre></div></li><li>You should see GRIP run out of battery on the way (<code>ERROR: not enough battery</code>), then <code>[supervisor] -&gt; charger</code>. In the viewer, CHARGER drives to GRIP, recharges it, and GRIP finishes the mission.</li></ol>
   <div class="credit">Paste into Claude Code, Cursor, Codex… Works best with the LangChain power-ups from the welcome page.</div>
 </div>
 
